@@ -15,7 +15,27 @@ export type ArtStyle =
   | 'chaotic' 
   | 'digital' 
   | 'expressionist'
-  | 'abstract';
+  | 'abstract'
+  | 'cubist'
+  | 'impressionist'
+  | 'bauhaus'
+  | 'collage'
+  | 'meme';
+
+export type MemeVariant = 'slogan' | 'poster' | 'comic' | 'glitch' | 'diagram' | 'absurd';
+
+export const ART_STYLES: ArtStyle[] = [
+  'geometric', 'surreal', 'minimal', 'organic', 'chaotic', 'digital',
+  'expressionist', 'abstract', 'cubist', 'impressionist', 'bauhaus', 'collage', 'meme',
+];
+
+export interface ArtworkHistoryEntry {
+  turn: number;
+  eventType: string;
+  agent: string;
+  description: string;
+  data?: Record<string, unknown>;
+}
 
 export interface Artwork {
   id: string;
@@ -25,10 +45,16 @@ export interface Artwork {
   description: string;
   createdAtTurn: number;
   criticScore: number | null;
-  collectorValue: number | null;
   status: ArtworkStatus;
   svgData: string; // SVG representation
   seed: number; // For reproducible generation
+  marketValue: number;
+  acquiredBy?: string;
+  signatureMotif?: string;
+  inspiration?: string;
+  memeVariant?: MemeVariant;
+  compositionSignature?: string;
+  history: ArtworkHistoryEntry[];
 }
 
 export function createArtwork(
@@ -41,6 +67,10 @@ export function createArtwork(
   seed: number,
   svgData: string
 ): Artwork {
+  const signatureMotif = svgData.match(/data-motif="([^"]*)"/)?.[1] || undefined;
+  const inspiration = svgData.match(/data-inspiration="([^"]*)"/)?.[1] || undefined;
+  const memeVariant = svgData.match(/data-meme-variant="([^"]*)"/)?.[1] as MemeVariant | undefined;
+  const compositionSignature = svgData.match(/data-composition="([^"]*)"/)?.[1] || undefined;
   return {
     id,
     title,
@@ -49,9 +79,20 @@ export function createArtwork(
     description,
     createdAtTurn: turn,
     criticScore: null,
-    collectorValue: null,
     status: 'submitted',
     svgData,
     seed,
+    marketValue: 0,
+    signatureMotif,
+    inspiration,
+    memeVariant,
+    compositionSignature,
+    history: [{
+      turn,
+      eventType: 'artwork_submitted',
+      agent: artist,
+      description: `${title} was submitted in the ${style} style.`,
+      data: { style },
+    }],
   };
 }

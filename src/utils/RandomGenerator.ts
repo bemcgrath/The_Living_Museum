@@ -8,7 +8,7 @@
 import seedrandom from 'seedrandom';
 
 export class RandomGenerator {
-  private rng: ReturnType<typeof seedrandom>;
+  private rng: seedrandom.PRNG;
   private seed: number;
 
   constructor(seed: number = Date.now()) {
