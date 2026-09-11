@@ -72,6 +72,7 @@ export default function App() {
   const [eventAgentFilter, setEventAgentFilter] = useState('all');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [collectionFilter, setCollectionFilter] = useState<'all' | 'displayed' | 'acquired'>('all');
+  const [galleryLimit, setGalleryLimit] = useState(60);
   const [pendingArchivedSnapshot, setPendingArchivedSnapshot] = useState<string | null>(null);
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
@@ -109,10 +110,14 @@ export default function App() {
   }, [engine, pendingArchivedSnapshot]);
 
   const artworks = world.getArtworks().slice().reverse();
-  const visibleArtworks = artworks.filter((artwork) =>
+  const filteredArtworks = artworks.filter((artwork) =>
     collectionFilter === 'all' || (collectionFilter === 'displayed' && artwork.status === 'displayed') ||
     (collectionFilter === 'acquired' && artwork.status === 'acquired'),
   );
+  // Render only a page of cards at a time; long runs can accumulate hundreds of works and rendering
+  // every SVG card on every simulation tick would make the UI sluggish.
+  const visibleArtworks = filteredArtworks.slice(0, galleryLimit);
+  const hasMoreArtworks = filteredArtworks.length > visibleArtworks.length;
   const stats = world.getStats();
   const eventTypes = [...new Set(world.getEvents().map((event) => event.eventType))];
   const eventAgents = [...new Set(world.getEvents().map((event) => event.agent))];
@@ -147,6 +152,7 @@ export default function App() {
     archiveCurrentCollection();
     setSeed(nextSeed);
     setRunSource('fresh');
+    setGalleryLimit(60);
   }
 
   function generateCollection(): void {
@@ -156,6 +162,7 @@ export default function App() {
     setSeed(nextSeed);
     setSeedDraft(String(nextSeed));
     setRunSource('fresh');
+    setGalleryLimit(60);
   }
 
   const displayedCount = artworks.filter((artwork) => artwork.status === 'displayed').length;
@@ -179,8 +186,25 @@ export default function App() {
     }
   }
 
-  function archiveCurrentCollection(): void {
-    if (world.turn === 0) return;
+  function persistArchive(nextArchive: ArchivedCollection[]): ArchivedCollection[] {
+    // Snapshots grow with turn count; on very long runs (or many saved collections) this can exceed
+    // the browser's localStorage quota. Retry with progressively fewer saved collections rather than
+    // silently losing the save or crashing.
+    let candidate = nextArchive;
+    while (candidate.length > 0) {
+      try {
+        window.localStorage.setItem('living-museum-archive', JSON.stringify(candidate));
+        return candidate;
+      } catch {
+        candidate = candidate.slice(0, -1);
+      }
+    }
+    window.localStorage.removeItem('living-museum-archive');
+    return candidate;
+  }
+
+  function archiveCurrentCollection(): 'saved' | 'trimmed' | 'failed' | 'skipped' {
+    if (world.turn === 0) return 'skipped';
     const dominantStyle = world.getStats().dominantStyle ?? 'emerging';
     const title = `${dominantStyle.charAt(0).toUpperCase()}${dominantStyle.slice(1)} Horizons`;
     const entry: ArchivedCollection = {
@@ -198,8 +222,11 @@ export default function App() {
       snapshot: world.snapshot(),
     };
     const nextArchive = [entry, ...archive.filter((item) => item.seed !== entry.seed || item.turn !== entry.turn)].slice(0, 8);
-    setArchive(nextArchive);
-    window.localStorage.setItem('living-museum-archive', JSON.stringify(nextArchive));
+    const persisted = persistArchive(nextArchive);
+    setArchive(persisted);
+    if (!persisted.some((item) => item.id === entry.id)) return 'failed';
+    if (persisted.length < nextArchive.length) return 'trimmed';
+    return 'saved';
   }
 
   function loadArchivedCollection(entry: ArchivedCollection): void {
@@ -214,9 +241,14 @@ export default function App() {
       window.alert('Advance the simulation at least 1 turn before saving a collection.');
       return;
     }
-    archiveCurrentCollection();
-    setSaveNotice('Collection saved to Previous collections!');
-    setTimeout(() => setSaveNotice(null), 3500);
+    const result = archiveCurrentCollection();
+    const message = result === 'failed'
+      ? 'This run is too large to fit in browser storage. Try exporting it instead.'
+      : result === 'trimmed'
+        ? 'Saved, but older collections were dropped to stay within browser storage limits.'
+        : 'Collection saved to Previous collections!';
+    setSaveNotice(message);
+    setTimeout(() => setSaveNotice(null), result === 'saved' ? 3500 : 5000);
   }
 
   function inviteArtist(): void {
@@ -345,11 +377,11 @@ export default function App() {
         <section className="collection-section">
           <div className="section-heading">
             <div><p className="eyebrow">The public galleries</p><h2>Collection</h2><p className="section-help">Every work is a trace of the culture forming around it. Select a piece to inspect its provenance.</p></div>
-            <label className="filter-control">View <select aria-label="Filter collection" value={collectionFilter} onChange={(event) => setCollectionFilter(event.target.value as typeof collectionFilter)}><option value="all">All works</option><option value="displayed">On display</option><option value="acquired">Acquired</option></select></label>
+            <label className="filter-control">View <select aria-label="Filter collection" value={collectionFilter} onChange={(event) => { setCollectionFilter(event.target.value as typeof collectionFilter); setGalleryLimit(60); }}><option value="all">All works</option><option value="displayed">On display</option><option value="acquired">Acquired</option></select></label>
           </div>
           <div className="gallery">
             {artworks.length === 0 && <div className="empty-state"><div className="empty-mark">✦</div><strong>The first canvas is waiting to be made</strong><p>Press <b>Advance turn</b> to let the artists begin.</p></div>}
-            {artworks.length > 0 && visibleArtworks.length === 0 && <p className="empty">No works match this view yet.</p>}
+            {artworks.length > 0 && filteredArtworks.length === 0 && <p className="empty">No works match this view yet.</p>}
             {visibleArtworks.map((artwork) => (
               <article className="art-card" key={artwork.id} onClick={() => setSelectedArtwork(artwork)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedArtwork(artwork)}>
                 <div className="art" dangerouslySetInnerHTML={{ __html: artwork.svgData }} />
@@ -368,6 +400,13 @@ export default function App() {
               </article>
             ))}
           </div>
+          {hasMoreArtworks && (
+            <div className="gallery-more">
+              <button className="button-quiet" onClick={() => setGalleryLimit((value) => value + 60)}>
+                Show more ({filteredArtworks.length - visibleArtworks.length} remaining)
+              </button>
+            </div>
+          )}
         </section>
 
         <aside>

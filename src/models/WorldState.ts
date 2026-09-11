@@ -18,6 +18,7 @@ export interface WorldSave {
   agents: Array<Omit<Agent, 'relationships'> & { relationships: Array<[string, number]> }>;
   movements: Movement[];
   events: WorldEvent[];
+  historicalEvents?: WorldEvent[];
   exhibitions: Exhibition[];
 }
 
@@ -44,8 +45,12 @@ export class WorldState {
   private agents: Map<string, Agent> = new Map();
   private movements: Map<string, Movement> = new Map();
   private events: WorldEvent[] = [];
+  // The full narrative (historian notes/milestones) is kept separately and never trimmed,
+  // since it is sparse and drives the historian summary/export even on very long runs.
+  private historicalEvents: WorldEvent[] = [];
   private exhibitions: Exhibition[] = [];
-  
+  private static readonly MAX_RECENT_EVENTS = 500;
+
   turn: number = 0;
   seedValue: number = 42;
 
@@ -74,6 +79,7 @@ export class WorldState {
     return this.movements.get(id);
   }
 
+  /** Returns the recent event log (bounded to the last MAX_RECENT_EVENTS entries on very long runs). */
   getEvents(): WorldEvent[] {
     return [...this.events];
   }
@@ -91,8 +97,9 @@ export class WorldState {
   }
 
   getHistoricalEvents(): WorldEvent[] {
-    return this.events.filter((event) => event.eventType === 'historian_note' || event.eventType === 'historian_milestone');
+    return [...this.historicalEvents];
   }
+
 
   getNarrativeSummary(): string {
     const movement = this.getMovements().sort((left, right) => right.prominence - left.prominence)[0];
@@ -140,13 +147,22 @@ export class WorldState {
   }
 
   addEvent(agent: string, eventType: string, description: string, data?: Record<string, unknown>): void {
-    this.events.push({
+    const event: WorldEvent = {
       turn: this.turn,
       agent,
       eventType,
       description,
       data,
-    });
+    };
+    if (eventType === 'historian_note' || eventType === 'historian_milestone') {
+      this.historicalEvents.push(event);
+    }
+    this.events.push(event);
+    // Bound the recent event log so very long runs (hundreds of turns) don't grow memory,
+    // export size, and save snapshots without limit. The narrative (historicalEvents) is unaffected.
+    if (this.events.length > WorldState.MAX_RECENT_EVENTS) {
+      this.events.splice(0, this.events.length - WorldState.MAX_RECENT_EVENTS);
+    }
   }
 
   // Analysis methods
@@ -246,6 +262,7 @@ export class WorldState {
     this.agents.clear();
     this.movements.clear();
     this.events = [];
+    this.historicalEvents = [];
     this.exhibitions = [];
     this.turn = 0;
   }
@@ -262,6 +279,7 @@ export class WorldState {
       })),
       movements: this.getMovements(),
       events: this.events,
+      historicalEvents: this.historicalEvents,
       exhibitions: this.exhibitions,
     };
     return JSON.stringify(save);
@@ -293,6 +311,9 @@ export class WorldState {
     ]));
     this.movements = new Map(data.movements.map((movement) => [movement.id, movement]));
     this.events = [...data.events];
+    this.historicalEvents = Array.isArray(data.historicalEvents)
+      ? [...data.historicalEvents]
+      : this.events.filter((event) => event.eventType === 'historian_note' || event.eventType === 'historian_milestone');
     this.exhibitions = Array.isArray(data.exhibitions) ? [...data.exhibitions] : [];
     this.turn = data.turn;
     this.seedValue = data.seedValue;

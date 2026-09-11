@@ -94,6 +94,21 @@ describe('SimulationEngine', () => {
     expect(world.getMovements()[0].prominence).toBeGreaterThanOrEqual(0);
   });
 
+  it('bounds the recent event log on long runs while preserving full historian narrative', () => {
+    const engine = createTestEngine(55);
+    for (let turn = 0; turn < 600; turn++) engine.advanceTurn();
+    const world = engine.getWorldState();
+    expect(world.turn).toBe(600);
+    expect(world.getEvents().length).toBeLessThanOrEqual(500);
+    expect(world.getHistoricalEvents().length).toBeGreaterThan(100);
+    expect(world.getArtworks().length).toBeGreaterThan(0);
+    // A save/load round trip should still work at this scale and preserve the full narrative.
+    const restored = createTestEngine(999);
+    restored.loadSnapshot(world.snapshot());
+    expect(restored.getWorldState().getHistoricalEvents().length).toBe(world.getHistoricalEvents().length);
+    expect(restored.getWorldState().getEvents().length).toBe(world.getEvents().length);
+  });
+
   it('resets state and stops a running simulation', () => {
     const engine = createTestEngine(12);
     engine.advanceTurn();
