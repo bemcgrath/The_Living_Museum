@@ -19,12 +19,13 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 button, select, input { font: inherit; }
-button { border: 1px solid #655a7d; border-radius: .55rem; background: #29233a; color: var(--ink); padding: .68rem .95rem; cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
-button:hover { background: #3a2f52; border-color: #8c78aa; transform: translateY(-1px); }
+button { border: 1px solid #655a7d; border-radius: .55rem; background: #29233a; color: var(--ink); padding: .68rem .95rem; cursor: pointer; transition: background .18s, border-color .18s, transform .18s, box-shadow .18s, color .18s; }
+button:hover { background: #3a2f52; border-color: var(--lavender); color: #fff; transform: translateY(-1px); box-shadow: 0 0 0 3px #d5a8ff22; }
 button:focus-visible, select:focus-visible, input:focus-visible, .art-card:focus-visible, .interactive-row:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
 .button-primary { background: var(--purple-btn); color: #fff; border-color: var(--purple-border); font-weight: 750; }
-.button-primary:hover { background: var(--purple-btn-hover); border-color: #dcb3ff; }
+.button-primary:hover { background: var(--purple-btn-hover); border-color: #dcb3ff; box-shadow: 0 0 0 3px #d5a8ff33; }
 .button-quiet { background: transparent; border-color: #514860; color: var(--muted); }
+.button-quiet:hover { background: #3a2f52; border-color: var(--lavender); color: #fff; box-shadow: 0 0 0 3px #d5a8ff22; }
 .museum { max-width: 1380px; margin: 0 auto; padding: 2rem clamp(1.1rem, 4vw, 4rem) 5rem; }
 .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; padding: .5rem 0 1.25rem; border-bottom: 1px solid var(--line); }
 .brand-lockup { display: flex; align-items: flex-start; gap: .85rem; }

@@ -277,7 +277,7 @@ export default function App() {
           <div className="live-indicator"><span className="live-dot" /> {engine.isSimulationRunning() ? 'Simulation live' : 'Simulation paused'} <span className="turn-label">Turn {world.turn}</span></div>
           <div className="controls">
             <button className="button-primary" onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()}>
-              {engine.isSimulationRunning() ? 'Pause' : 'Play'}
+              {engine.isSimulationRunning() ? 'Pause' : 'Create collection'}
             </button>
             <button onClick={() => engine.advanceTurn()}>Advance turn</button>
             <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Save current museum run to Previous collections">Save collection</button>
