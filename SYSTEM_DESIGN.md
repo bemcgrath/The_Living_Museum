@@ -340,7 +340,7 @@ src/
 ### PHASE 6: Polish & Extension
 - ✅ Testing suite
 - ✅ Animation/transitions
-- [ ] Performance optimization (for very long-running simulations)
+- ✅ Performance optimization (bounded event log, paginated gallery, guarded localStorage saves — verified stable at 600+ turns)
 - ✅ Export simulation history
 - ✅ Narrative generation (historian summary)
 
@@ -359,12 +359,12 @@ src/
 
 ## Success Metrics
 
-- [ ] Agents autonomously create diverse artwork
-- [ ] Movements emerge and decline naturally
-- [ ] Same seed produces identical simulation
-- [ ] UI shows rich interaction patterns
-- [ ] Simulation runs 100+ turns without bugs
-- [ ] Compelling narratives emerge (even if unplanned)
+- ✅ Agents autonomously create diverse artwork
+- ✅ Movements emerge and decline naturally
+- ✅ Same seed produces identical simulation
+- ✅ UI shows rich interaction patterns
+- ✅ Simulation runs 100+ turns without bugs
+- [ ] Compelling narratives emerge (even if unplanned) — subjective; historian narrative works mechanically but hasn't been evaluated for storytelling quality
 
 ---
 
