@@ -248,8 +248,8 @@ export default function App() {
         </div>
       </header>
       <section className="stats">
-        <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong>{stats.currentTurn}</strong><small>of an unfolding history</small></div>
-        <div className="stat-card"><span className="stat-label">Artworks</span><strong>{stats.totalArtworks}</strong><small>{displayedCount} currently displayed</small></div>
+        <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong key={stats.currentTurn} className="stat-pop">{stats.currentTurn}</strong><small>of an unfolding history</small></div>
+        <div className="stat-card"><span className="stat-label">Artworks</span><strong key={stats.totalArtworks} className="stat-pop">{stats.totalArtworks}</strong><small>{displayedCount} currently displayed</small></div>
         <div className="stat-card"><span className="stat-label">Dominant style</span><strong className="stat-value-text">{stats.dominantStyle ?? 'Emerging'}</strong><small>the museum's current taste</small></div>
         <div className="stat-card"><span className="stat-label">World events</span><strong>{world.getEvents().length}</strong><small>moments recorded</small></div>
       </section>
