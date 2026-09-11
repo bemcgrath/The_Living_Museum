@@ -47,6 +47,7 @@ export default function App() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [eventAgentFilter, setEventAgentFilter] = useState('all');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [collectionFilter, setCollectionFilter] = useState<'all' | 'displayed' | 'acquired'>('all');
   const [pendingArchivedSnapshot, setPendingArchivedSnapshot] = useState<string | null>(null);
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
@@ -80,6 +81,10 @@ export default function App() {
   }, [engine, pendingArchivedSnapshot]);
 
   const artworks = world.getArtworks().slice().reverse();
+  const visibleArtworks = artworks.filter((artwork) =>
+    collectionFilter === 'all' || (collectionFilter === 'displayed' && artwork.status === 'displayed') ||
+    (collectionFilter === 'acquired' && artwork.status === 'acquired'),
+  );
   const stats = world.getStats();
   const eventTypes = [...new Set(world.getEvents().map((event) => event.eventType))];
   const eventAgents = [...new Set(world.getEvents().map((event) => event.agent))];
@@ -221,26 +226,32 @@ export default function App() {
 
   return (
     <main className="museum">
-      <header>
-        <div>
-          <p className="eyebrow">A procedural culture simulator</p>
-          <h1>The Living Museum</h1>
-          <p>Watch a seeded art world develop its own taste.</p>
+      <header className="hero">
+        <div className="brand-lockup">
+          <div className="museum-mark" aria-hidden="true"><span /><span /><span /></div>
+          <div>
+            <p className="eyebrow">A procedural culture simulator</p>
+            <h1>The Living Museum</h1>
+            <p className="hero-copy">A seeded art world that finds its own taste.</p>
+          </div>
         </div>
-        <div className="controls">
-          <button onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()}>
-            {engine.isSimulationRunning() ? 'Pause' : 'Play'}
-          </button>
-          <button onClick={() => engine.advanceTurn()}>Advance turn</button>
-          <button onClick={generateCollection} title="Replace the current run with a new collection">Generate new collection</button>
-          <button onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
+        <div className="hero-actions">
+          <div className="live-indicator"><span className="live-dot" /> {engine.isSimulationRunning() ? 'Simulation live' : 'Simulation paused'} <span className="turn-label">Turn {world.turn}</span></div>
+          <div className="controls">
+            <button className="button-primary" onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()}>
+              {engine.isSimulationRunning() ? 'Pause' : 'Play'}
+            </button>
+            <button onClick={() => engine.advanceTurn()}>Advance turn</button>
+            <button className="button-quiet" onClick={generateCollection} title="Replace the current run with a new collection" aria-label="Generate new collection">New collection</button>
+            <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
+          </div>
         </div>
       </header>
       <section className="stats">
-        <div><strong>{stats.currentTurn}</strong><span>turn</span></div>
-        <div><strong>{stats.totalArtworks}</strong><span>artworks</span></div>
-        <div><strong>{stats.dominantStyle ?? '—'}</strong><span>dominant style</span></div>
-        <div><strong>{world.getEvents().length}</strong><span>events</span></div>
+        <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong>{stats.currentTurn}</strong><small>of an unfolding history</small></div>
+        <div className="stat-card"><span className="stat-label">Artworks</span><strong>{stats.totalArtworks}</strong><small>{displayedCount} currently displayed</small></div>
+        <div className="stat-card"><span className="stat-label">Dominant style</span><strong className="stat-value-text">{stats.dominantStyle ?? 'Emerging'}</strong><small>the museum's current taste</small></div>
+        <div className="stat-card"><span className="stat-label">World events</span><strong>{world.getEvents().length}</strong><small>moments recorded</small></div>
       </section>
       <section className="narrative">
         <p className="eyebrow">Historian's summary</p>
@@ -266,11 +277,15 @@ export default function App() {
       </section>
 
       <div className="content-grid">
-        <section>
-          <h2>Collection</h2>
+        <section className="collection-section">
+          <div className="section-heading">
+            <div><p className="eyebrow">The public galleries</p><h2>Collection</h2><p className="section-help">Every work is a trace of the culture forming around it. Select a piece to inspect its provenance.</p></div>
+            <label className="filter-control">View <select aria-label="Filter collection" value={collectionFilter} onChange={(event) => setCollectionFilter(event.target.value as typeof collectionFilter)}><option value="all">All works</option><option value="displayed">On display</option><option value="acquired">Acquired</option></select></label>
+          </div>
           <div className="gallery">
-            {artworks.length === 0 && <p className="empty">The first canvas has yet to be submitted.</p>}
-            {artworks.map((artwork) => (
+            {artworks.length === 0 && <div className="empty-state"><div className="empty-mark">✦</div><strong>The first canvas is waiting to be made</strong><p>Press <b>Advance turn</b> to let the artists begin.</p></div>}
+            {artworks.length > 0 && visibleArtworks.length === 0 && <p className="empty">No works match this view yet.</p>}
+            {visibleArtworks.map((artwork) => (
               <article className="art-card" key={artwork.id} onClick={() => setSelectedArtwork(artwork)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedArtwork(artwork)}>
                 <div className="art" dangerouslySetInnerHTML={{ __html: artwork.svgData }} />
                 <div className="art-meta">
@@ -314,7 +329,7 @@ export default function App() {
                 <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${agent.primaryStyle}` : ''}</strong>
                 <span title="Reputation reflects recognition from critics, curators, and collectors.">{agent.role} · reputation {agent.reputation}/100</span>
                 <small>{agent.currentGoal || 'Waiting for the next turn'}</small>
-                {agent.lastDecision && <small className="decision">Last action: {agent.lastDecision.action}</small>}
+                <small className="agent-hint">Open profile for memory &amp; relationships →</small>
               </li>
             ))}
           </ul>
