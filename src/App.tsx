@@ -39,6 +39,30 @@ interface ArchivedCollection {
   snapshot: string;
 }
 
+function createSampleArchivedCollection(): ArchivedCollection {
+  const sampleEngine = createEngine(101);
+  for (let turn = 0; turn < 10; turn++) {
+    sampleEngine.advanceTurn();
+  }
+  const sampleWorld = sampleEngine.getWorldState();
+  const dominantStyle = sampleWorld.getStats().dominantStyle ?? 'expressionist';
+  const title = `${dominantStyle.charAt(0).toUpperCase()}${dominantStyle.slice(1)} Horizons (Sample Collection)`;
+  return {
+    id: 'sample-collection-101-10',
+    title,
+    seed: 101,
+    turn: 10,
+    artworkCount: sampleWorld.getArtworks().length,
+    displayedCount: sampleWorld.getArtworks().filter((artwork) => artwork.status === 'displayed').length,
+    acquiredCount: sampleWorld.getArtworks().filter((artwork) => artwork.status === 'acquired').length,
+    artistNames: sampleWorld.getAgents().filter((agent) => agent.role === 'artist').map((agent) => agent.name),
+    exhibitionCount: sampleWorld.getExhibitions().length,
+    dominantStyle,
+    savedAt: new Date().toISOString(),
+    snapshot: sampleWorld.snapshot(),
+  };
+}
+
 export default function App() {
   const [seed, setSeed] = useState(42);
   const [seedDraft, setSeedDraft] = useState('42');
@@ -50,9 +74,13 @@ export default function App() {
   const [collectionFilter, setCollectionFilter] = useState<'all' | 'displayed' | 'acquired'>('all');
   const [pendingArchivedSnapshot, setPendingArchivedSnapshot] = useState<string | null>(null);
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
+      if (saved.length === 0) {
+        return [createSampleArchivedCollection()];
+      }
       return saved.map((entry) => ({
         ...entry,
         title: entry.title ?? 'Archived collection',
@@ -64,7 +92,7 @@ export default function App() {
         dominantStyle: entry.dominantStyle ?? 'emerging',
       })) as ArchivedCollection[];
     } catch {
-      return [];
+      return [createSampleArchivedCollection()];
     }
   });
   const fileInput = useRef<HTMLInputElement>(null);
@@ -163,6 +191,16 @@ export default function App() {
     setRunSource('loaded');
   }
 
+  function saveCurrentCollectionToArchive(): void {
+    if (world.turn === 0) {
+      window.alert('Advance the simulation at least 1 turn before saving a collection.');
+      return;
+    }
+    archiveCurrentCollection();
+    setSaveNotice('Collection saved to Previous collections!');
+    setTimeout(() => setSaveNotice(null), 3500);
+  }
+
   function inviteArtist(): void {
     const invitedNumber = world.getAgents().filter((agent) => agent.id.startsWith('invited-artist-')).length + 1;
     const inviteRng = new RandomGenerator(world.seedValue + world.turn * 7919 + invitedNumber);
@@ -242,33 +280,41 @@ export default function App() {
               {engine.isSimulationRunning() ? 'Pause' : 'Play'}
             </button>
             <button onClick={() => engine.advanceTurn()}>Advance turn</button>
+            <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Save current museum run to Previous collections">Save collection</button>
             <button className="button-quiet" onClick={generateCollection} title="Replace the current run with a new collection" aria-label="Generate new collection">New collection</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
           </div>
+          {saveNotice && <div className="save-notice">{saveNotice}</div>}
         </div>
       </header>
-      <section className="stats">
-        <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong key={stats.currentTurn} className="stat-pop">{stats.currentTurn}</strong><small>of an unfolding history</small></div>
-        <div className="stat-card"><span className="stat-label">Artworks</span><strong key={stats.totalArtworks} className="stat-pop">{stats.totalArtworks}</strong><small>{displayedCount} currently displayed</small></div>
-        <div className="stat-card"><span className="stat-label">Dominant style</span><strong className="stat-value-text">{stats.dominantStyle ?? 'Emerging'}</strong><small>the museum's current taste</small></div>
-        <div className="stat-card"><span className="stat-label">World events</span><strong>{world.getEvents().length}</strong><small>moments recorded</small></div>
+      <section className="summary-strip">
+        <div className="stats-grid">
+          <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong key={stats.currentTurn} className="stat-pop">{stats.currentTurn}</strong><small>unfolding history</small></div>
+          <div className="stat-card"><span className="stat-label">Artworks</span><strong key={stats.totalArtworks} className="stat-pop">{stats.totalArtworks}</strong><small>{displayedCount} displayed</small></div>
+          <div className="stat-card"><span className="stat-label">Dominant</span><strong className="stat-value-text">{stats.dominantStyle ?? 'Emerging'}</strong><small>museum taste</small></div>
+          <div className="stat-card"><span className="stat-label">Events</span><strong>{world.getEvents().length}</strong><small>recorded</small></div>
+        </div>
+        <div className="narrative-card">
+          <div className="narrative-header">
+            <p className="eyebrow">Historian's summary</p>
+            <button className="button-quiet small-btn" onClick={exportNarrative}>Export narrative</button>
+          </div>
+          <p>{world.getNarrativeSummary()}</p>
+        </div>
       </section>
-      <section className="narrative">
-        <p className="eyebrow">Historian's summary</p>
-        <p>{world.getNarrativeSummary()}</p>
-        <button onClick={exportNarrative}>Export museum history</button>
-      </section>
-      <section className="archive-panel">
-        <h2>Previous collections</h2>
-        <p className="section-help">Collections are saved here when you begin a new one. Open one to revisit its artists, exhibitions, and artworks.</p>
+      <section className="archive-panel compact-archive">
+        <div className="archive-header">
+          <h2>Previous collections</h2>
+          <span className="section-help">Click <b>Save collection</b> above or generate a new run to archive state here.</span>
+        </div>
         {archive.length === 0 ? <p className="empty">Your previous collections will appear here.</p> : (
           <ul className="archive-list">
             {archive.map((entry) => (
               <li key={entry.id}>
-                <span><strong>{entry.title}</strong><small>Turn {entry.turn} · {entry.artworkCount} works · {new Date(entry.savedAt).toLocaleString()}</small></span>
+                <span><strong>{entry.title}</strong><small>Turn {entry.turn} · {entry.artworkCount} works · {entry.dominantStyle}</small></span>
                 <div className="archive-actions">
                   <button onClick={() => setSelectedArchive(entry)}>Details</button>
-                  <button onClick={() => loadArchivedCollection(entry)}>Browse</button>
+                  <button className="button-primary small-btn" onClick={() => loadArchivedCollection(entry)}>Browse</button>
                 </div>
               </li>
             ))}

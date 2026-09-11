@@ -45,12 +45,19 @@ describe('museum dashboard', () => {
 
     expect(screen.getByText('Previous collections')).toBeTruthy();
     expect(screen.getByText('Emerging Horizons')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Details' })[0]);
     expect(screen.getByRole('heading', { name: 'Emerging Horizons' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Close collection details' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Browse' })[0]);
 
     expect(screen.getByText('Resumed save · seed 42')).toBeTruthy();
     expect(screen.getByText('turn').parentElement?.querySelector('strong')?.textContent).toBe('1');
+  });
+
+  it('allows manually saving a collection to previous collections', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Advance turn' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save collection' }));
+    expect(screen.getByText('Collection saved to Previous collections!')).toBeTruthy();
   });
 });
