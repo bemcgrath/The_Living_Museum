@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { WorldState } from './models/WorldState';
-import { Artwork } from './models/Artwork';
+import { Artwork, ArtStyle } from './models/Artwork';
 import { Agent } from './models/Agent';
 import { SimulationEngine } from './simulation/SimulationEngine';
 import { Artist } from './simulation/agents/Artist';
@@ -72,10 +72,12 @@ export default function App() {
   const [eventAgentFilter, setEventAgentFilter] = useState('all');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [collectionFilter, setCollectionFilter] = useState<'all' | 'displayed' | 'acquired'>('all');
+  const [artistFilter, setArtistFilter] = useState('all');
+  const [movementFilter, setMovementFilter] = useState<ArtStyle | null>(null);
   const [galleryLimit, setGalleryLimit] = useState(60);
   const [pendingArchivedSnapshot, setPendingArchivedSnapshot] = useState<string | null>(null);
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
@@ -97,6 +99,7 @@ export default function App() {
     }
   });
   const fileInput = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLElement>(null);
   const engine = useMemo(() => createEngine(seed), [seed]);
   const [, render] = useState(0);
   const world = engine.getWorldState();
@@ -110,9 +113,12 @@ export default function App() {
   }, [engine, pendingArchivedSnapshot]);
 
   const artworks = world.getArtworks().slice().reverse();
+  const artistOptions = [...new Set(world.getArtworks().map((artwork) => artwork.artist))];
   const filteredArtworks = artworks.filter((artwork) =>
-    collectionFilter === 'all' || (collectionFilter === 'displayed' && artwork.status === 'displayed') ||
-    (collectionFilter === 'acquired' && artwork.status === 'acquired'),
+    (collectionFilter === 'all' || (collectionFilter === 'displayed' && artwork.status === 'displayed') ||
+      (collectionFilter === 'acquired' && artwork.status === 'acquired')) &&
+    (artistFilter === 'all' || artwork.artist === artistFilter) &&
+    (movementFilter === null || artwork.style === movementFilter),
   );
   // Render only a page of cards at a time; long runs can accumulate hundreds of works and rendering
   // every SVG card on every simulation tick would make the UI sluggish.
@@ -168,6 +174,57 @@ export default function App() {
   const displayedCount = artworks.filter((artwork) => artwork.status === 'displayed').length;
   const acquiredCount = artworks.filter((artwork) => artwork.status === 'acquired').length;
   const agentName = (id: string): string => world.getAgent(id)?.name ?? id;
+
+  function viewMovementWorks(style: ArtStyle): void {
+    setMovementFilter(style);
+    setCollectionFilter('all');
+    setArtistFilter('all');
+    setGalleryLimit(60);
+    galleryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function artworksByArtist(artistId: string): Artwork[] {
+    return world.getArtworks().filter((artwork) => artwork.artist === artistId).slice(-6).reverse();
+  }
+
+  function artworksAcquiredBy(collectorId: string): Artwork[] {
+    return world.getArtworks().filter((artwork) => artwork.acquiredBy === collectorId).slice(-6).reverse();
+  }
+
+  function artworksTouchedByAgent(agentId: string, eventTypes: string[]): Artwork[] {
+    return world.getArtworks()
+      .filter((artwork) => artwork.history.some((entry) => entry.agent === agentId && eventTypes.includes(entry.eventType)))
+      .slice(-6)
+      .reverse();
+  }
+
+  function agentSampleWorks(agent: Agent): { label: string; works: Artwork[] } {
+    if (agent.role === 'artist' || agent.role === 'rebel_artist') {
+      return { label: 'Recent work', works: artworksByArtist(agent.id) };
+    }
+    if (agent.role === 'collector') {
+      return { label: 'In their collection', works: artworksAcquiredBy(agent.id) };
+    }
+    if (agent.role === 'critic') {
+      return { label: 'Recently reviewed', works: artworksTouchedByAgent(agent.id, ['artwork_reviewed']) };
+    }
+    if (agent.role === 'curator') {
+      return { label: 'Recently curated', works: artworksTouchedByAgent(agent.id, ['artwork_displayed', 'artwork_rejected']) };
+    }
+    return { label: 'Related work', works: [] };
+  }
+
+  function describeAction(type: string | undefined): string {
+    const labels: Record<string, string> = {
+      submit_artwork: 'Submitted a new artwork',
+      review_artwork: 'Reviewed an artwork',
+      curate_artwork: 'Decided whether to display an artwork',
+      acquire_artwork: 'Acquired an artwork for their collection',
+      record_observation: 'Recorded a historical observation',
+    };
+    if (!type) return 'None yet';
+    return labels[type] ?? type;
+  }
 
   const agents = world.getAgents();
   const networkNodes = agents.map((agent, index) => {
@@ -247,8 +304,8 @@ export default function App() {
       : result === 'trimmed'
         ? 'Saved, but older collections were dropped to stay within browser storage limits.'
         : 'Collection saved to Previous collections!';
-    setSaveNotice(message);
-    setTimeout(() => setSaveNotice(null), result === 'saved' ? 3500 : 5000);
+    setNotice(message);
+    setTimeout(() => setNotice(null), result === 'saved' ? 3500 : 5000);
   }
 
   function inviteArtist(): void {
@@ -268,6 +325,8 @@ export default function App() {
     const artist = new Artist(id, name, profile.personality, world.seedValue + 1000 + invitedNumber * 37);
     engine.registerAgent(artist, () => new Artist(id, name, profile.personality, world.seedValue + 1000 + invitedNumber * 37));
     world.addEvent('museum', 'agent_invited', `${name} joined the museum as a ${artist.primaryStyle} artist.`, { agentId: id, primaryStyle: artist.primaryStyle });
+    setNotice(`${name} joined the museum as a ${artist.primaryStyle} artist!`);
+    setTimeout(() => setNotice(null), 3500);
     render((value) => value + 1);
   }
 
@@ -335,7 +394,7 @@ export default function App() {
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
           </div>
           <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
-          {saveNotice && <div className="save-notice">{saveNotice}</div>}
+          {notice && <div className="save-notice">{notice}</div>}
         </div>
       </header>
       <section className="summary-strip">
@@ -374,11 +433,20 @@ export default function App() {
       </section>
 
       <div className="content-grid">
-        <section className="collection-section">
+        <section className="collection-section" ref={galleryRef}>
           <div className="section-heading">
             <div><p className="eyebrow">The public galleries</p><h2>Collection</h2><p className="section-help">Every work is a trace of the culture forming around it. Select a piece to inspect its provenance.</p></div>
-            <label className="filter-control">View <select aria-label="Filter collection" value={collectionFilter} onChange={(event) => { setCollectionFilter(event.target.value as typeof collectionFilter); setGalleryLimit(60); }}><option value="all">All works</option><option value="displayed">On display</option><option value="acquired">Acquired</option></select></label>
+            <div className="filter-row">
+              <label className="filter-control">View <select aria-label="Filter collection" value={collectionFilter} onChange={(event) => { setCollectionFilter(event.target.value as typeof collectionFilter); setGalleryLimit(60); }}><option value="all">All works</option><option value="displayed">On display</option><option value="acquired">Acquired</option></select></label>
+              <label className="filter-control">Artist <select aria-label="Filter collection by artist" value={artistFilter} onChange={(event) => { setArtistFilter(event.target.value); setGalleryLimit(60); }}><option value="all">All artists</option>{artistOptions.map((id) => <option key={id} value={id}>{agentName(id)}</option>)}</select></label>
+            </div>
           </div>
+          {movementFilter && (
+            <div className="active-filter-chip">
+              Showing <strong>{movementFilter}</strong> works only
+              <button className="button-quiet small-btn" onClick={() => setMovementFilter(null)}>Clear</button>
+            </div>
+          )}
           <div className="gallery">
             {artworks.length === 0 && <div className="empty-state"><div className="empty-mark">✦</div><strong>The first canvas is waiting to be made</strong><p>Press <b>Advance turn</b> to let the artists begin.</p></div>}
             {artworks.length > 0 && filteredArtworks.length === 0 && <p className="empty">No works match this view yet.</p>}
@@ -388,6 +456,8 @@ export default function App() {
                 <div className="art-meta">
                   <h3>{artwork.title}</h3>
                   <p><strong className="style-label">{artwork.style}</strong> · {artwork.status}</p>
+                  <small className="artist-label">By {agentName(artwork.artist)}</small>
+                  {artwork.status === 'acquired' && artwork.acquiredBy && <small className="acquired-label">In {agentName(artwork.acquiredBy)}'s collection</small>}
                   {artwork.signatureMotif && <small className="motif-label">Signature: {artwork.signatureMotif}</small>}
                   {artwork.inspiration && <small className="inspiration-label">Inspired by: {artwork.inspiration}</small>}
                   {artwork.memeVariant && <small className="motif-label">Meme form: {artwork.memeVariant}</small>}
@@ -453,28 +523,35 @@ export default function App() {
               </div>
             </div>
           )}
-          <ul className="agent-list">
+          <ul className="agent-list agent-grid">
             {agents.map((agent) => (
               <li key={agent.id} className="interactive-row" onClick={() => setSelectedAgent(agent)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedAgent(agent)}>
                 <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${agent.primaryStyle}` : ''}</strong>
                 <span title="Reputation reflects recognition from critics, curators, and collectors.">{agent.role} · reputation {agent.reputation}/100</span>
                 <small>{agent.currentGoal || 'Waiting for the next turn'}</small>
-                <small className="agent-hint">Open profile for memory &amp; relationships →</small>
+                <small className="agent-hint">Open profile →</small>
               </li>
             ))}
           </ul>
           <h2>Movements</h2>
-          <ul className="movement-list">
+          <p className="section-help">Select a movement to see the works that define it.</p>
+          <ul className="movement-list movement-grid">
             {world.getMovements().length === 0 && <li className="empty">Movements emerge after repeated styles gain attention.</li>}
             {world.getMovements().sort((left, right) => right.prominence - left.prominence).map((movement) => (
-              <li key={movement.id}><strong>{movement.name}</strong><span>{movement.artworkCount} works · {Math.round(movement.prominence)} prominence</span></li>
+              <li key={movement.id} className="interactive-row" onClick={() => viewMovementWorks(movement.style)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && viewMovementWorks(movement.style)}>
+                <strong>{movement.name}</strong>
+                <span>{movement.artworkCount} works · {Math.round(movement.prominence)} prominence</span>
+                <small className="agent-hint">View works →</small>
+              </li>
             ))}
           </ul>
           <h2>Exhibitions</h2>
-          <ul className="movement-list">
+          <ul className="movement-list movement-grid">
             {world.getExhibitions().length === 0 && <li className="empty">The curator is assembling the first exhibition.</li>}
             {world.getExhibitions().slice().reverse().slice(0, 3).map((exhibition) => (
-              <li key={exhibition.id}><strong>{exhibition.title}</strong><span>{exhibition.theme}</span><small>{exhibition.artworkIds.length} works · {exhibition.artistIds.length} artists</small></li>
+              <li key={exhibition.id} className="interactive-row" onClick={() => viewMovementWorks(exhibition.style)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && viewMovementWorks(exhibition.style)}>
+                <strong>{exhibition.title}</strong><span>{exhibition.theme}</span><small>{exhibition.artworkIds.length} works · {exhibition.artistIds.length} artists</small>
+              </li>
             ))}
           </ul>
           <h2>Recent events</h2>
@@ -550,13 +627,13 @@ export default function App() {
               <button className="secondary-action" onClick={() => saveArtwork(selectedArtwork)}>Export metadata</button>
             </div>
             <dl className="details">
-              <dt>Artist</dt><dd>{selectedArtwork.artist}</dd>
+              <dt>Artist</dt><dd>{agentName(selectedArtwork.artist)}</dd>
               <dt>Style</dt><dd>{selectedArtwork.style}</dd>
               <dt>Signature motif</dt><dd>{selectedArtwork.signatureMotif ?? 'None recorded'}</dd>
               <dt>Inspiration</dt><dd>{selectedArtwork.inspiration ?? 'Independent work'}</dd>
               <dt>Meme form</dt><dd>{selectedArtwork.memeVariant ?? 'Not applicable'}</dd>
               <dt>Composition</dt><dd>{selectedArtwork.compositionSignature ?? 'Not recorded'}</dd>
-              <dt>Status</dt><dd>{selectedArtwork.status}</dd>
+              <dt>Status</dt><dd>{selectedArtwork.status}{selectedArtwork.status === 'acquired' && selectedArtwork.acquiredBy ? ` — in ${agentName(selectedArtwork.acquiredBy)}'s collection` : ''}</dd>
               <dt>Critic score</dt><dd>{selectedArtwork.criticScore ?? 'Awaiting review'}</dd>
               <dt>Market value</dt><dd>{selectedArtwork.marketValue}</dd>
               <dt>Created</dt><dd>Turn {selectedArtwork.createdAtTurn}</dd>
@@ -580,8 +657,30 @@ export default function App() {
               <dt>Role</dt><dd>{selectedAgent.role}</dd>
               <dt>Reputation</dt><dd>{selectedAgent.reputation}/100 — recognition earned from reception and market success</dd>
               <dt>Current goal</dt><dd>{selectedAgent.currentGoal || 'Waiting'}</dd>
-              <dt>Last action</dt><dd>{selectedAgent.lastDecision?.action ?? 'None yet'}</dd>
+              <dt>Last action</dt><dd>{describeAction(selectedAgent.lastDecision?.action)}</dd>
             </dl>
+            {(() => {
+              const sample = agentSampleWorks(selectedAgent);
+              if (sample.works.length === 0) return null;
+              return (
+                <>
+                  <h3>{sample.label}</h3>
+                  <div className="agent-sample-gallery">
+                    {sample.works.map((artwork) => (
+                      <button
+                        key={artwork.id}
+                        className="agent-sample-card"
+                        onClick={() => { setSelectedAgent(null); setSelectedArtwork(artwork); }}
+                        title={`${artwork.title} · ${artwork.status}`}
+                      >
+                        <span className="agent-sample-art" dangerouslySetInnerHTML={{ __html: artwork.svgData }} />
+                        <small>{artwork.title}</small>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
             <h3>Relationships</h3>
             {selectedAgent.relationships.size === 0 ? <p className="empty">No relationships recorded yet.</p> : (
               <ul className="relationship-graph">

@@ -34,7 +34,7 @@ describe('museum dashboard', () => {
   it('invites a new artist with a visible profile', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Invite artist' }));
-    expect(screen.getByText(/joined the museum as a/)).toBeTruthy();
+    expect(screen.getAllByText(/joined the museum as a/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Lumen 1 ·|Kite 1 ·|Mara 1 ·|Solace 1 ·|Venn 1 ·|Nova 1 ·/)).toBeTruthy();
   });
 
