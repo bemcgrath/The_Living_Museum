@@ -326,7 +326,7 @@ src/
 - ✅ React components for all views
 - ✅ Real-time simulation display
 - ✅ Artwork gallery (with filtering and detail modal)
-- [ ] Agent relationship graph (currently list-based; a network view is planned)
+- ✅ Agent relationship graph (SVG network view of agent bonds/tensions, alongside the detailed per-agent list)
 - ✅ Timeline/event log
 - ✅ Statistics dashboard
 
