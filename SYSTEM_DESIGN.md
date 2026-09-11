@@ -302,47 +302,47 @@ src/
 
 ## Phase Roadmap
 
-### PHASE 1: Core Architecture (Current)
+### PHASE 1: Core Architecture
 - ✅ Data models (Artwork, Agent, Movement, WorldState)
 - ✅ SimulationEngine orchestration
 - ✅ RandomGenerator (seeded RNG)
 - ✅ ArtGenerator (procedural SVG)
-- [ ] Vite + TypeScript build setup
-- [ ] Package.json configuration
+- ✅ Vite + TypeScript build setup
+- ✅ Package.json configuration
 
 ### PHASE 2: Agent Implementations
-- [ ] Concrete agent classes (Artist, Curator, Critic, etc.)
-- [ ] Agent decision logic for each role
-- [ ] Relationship scoring system
-- [ ] Memory/learning mechanisms
+- ✅ Concrete agent classes (Artist, Curator, Critic, Collector, Historian)
+- ✅ Agent decision logic for each role
+- ✅ Relationship scoring system
+- ✅ Memory/learning mechanisms
 
 ### PHASE 3: Simulation Logic
-- [ ] Action processing system
-- [ ] Scoring algorithms
-- [ ] Movement emergence detection
-- [ ] Event generation
+- ✅ Action processing system
+- ✅ Scoring algorithms
+- ✅ Movement emergence detection
+- ✅ Event generation
 
-### PHASE 4: UI/Visualization
-- [ ] React components for all views
-- [ ] Real-time simulation display
-- [ ] Artwork gallery
-- [ ] Agent relationship graph
-- [ ] Timeline/event log
-- [ ] Statistics dashboard
+### PHASE 4: UI/Visualization (Current)
+- ✅ React components for all views
+- ✅ Real-time simulation display
+- ✅ Artwork gallery (with filtering and detail modal)
+- ✅ Agent relationship graph (SVG network view of agent bonds/tensions, alongside the detailed per-agent list)
+- ✅ Timeline/event log
+- ✅ Statistics dashboard
 
 ### PHASE 5: Interactivity
-- [ ] Play/pause/reset controls
-- [ ] Speed adjustment
-- [ ] Seed input for reproducibility
-- [ ] Agent interaction (force actions)
-- [ ] Save/load simulation state
+- ✅ Play/pause/reset controls
+- ✅ Speed adjustment
+- ✅ Seed input for reproducibility
+- ✅ Agent interaction (invite artist)
+- ✅ Save/load simulation state
 
 ### PHASE 6: Polish & Extension
-- [ ] Testing suite
-- [ ] Performance optimization
-- [ ] Animation/transitions
-- [ ] Export simulation history
-- [ ] Narrative generation
+- ✅ Testing suite
+- ✅ Animation/transitions
+- ✅ Performance optimization (bounded event log, paginated gallery, guarded localStorage saves — verified stable at 600+ turns)
+- ✅ Export simulation history
+- ✅ Narrative generation (historian summary)
 
 ---
 
@@ -359,12 +359,12 @@ src/
 
 ## Success Metrics
 
-- [ ] Agents autonomously create diverse artwork
-- [ ] Movements emerge and decline naturally
-- [ ] Same seed produces identical simulation
-- [ ] UI shows rich interaction patterns
-- [ ] Simulation runs 100+ turns without bugs
-- [ ] Compelling narratives emerge (even if unplanned)
+- ✅ Agents autonomously create diverse artwork
+- ✅ Movements emerge and decline naturally
+- ✅ Same seed produces identical simulation
+- ✅ UI shows rich interaction patterns
+- ✅ Simulation runs 100+ turns without bugs
+- [ ] Compelling narratives emerge (even if unplanned) — subjective; historian narrative works mechanically but hasn't been evaluated for storytelling quality
 
 ---
 

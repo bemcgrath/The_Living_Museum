@@ -52,6 +52,14 @@ export function generateMovementName(style: ArtStyle, turn: number): string {
     digital: 'Digital',
     expressionist: 'Expressi',
     abstract: 'Abstr',
+    cubist: 'Cub',
+    impressionist: 'Impress',
+    bauhaus: 'Bau',
+    collage: 'Collag',
+    meme: 'Meme',
+    post_impressionist: 'Post-Impress',
+    pastoral: 'Pastoral',
+    silver_gelatin: 'Gelat',
   };
 
   const base = styleBases[style];
