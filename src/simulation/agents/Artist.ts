@@ -6,7 +6,7 @@
  */
 
 import { BaseAgent, Agent, AgentAction } from '../../models/Agent';
-import { ART_STYLES, createArtwork, ArtStyle, MemeVariant } from '../../models/Artwork';
+import { ART_STYLES, createArtwork, ArtStyle, MemeVariant, styleLabel } from '../../models/Artwork';
 import { WorldState } from '../../models/WorldState';
 import { ArtGenerator } from '../../utils/ArtGenerator';
 import { RandomGenerator } from '../../utils/RandomGenerator';
@@ -28,7 +28,8 @@ export class Artist extends BaseAgent {
     id: string,
     name: string,
     personality: string,
-    seed: number
+    seed: number,
+    forcedPrimaryStyle?: ArtStyle
   ) {
     super(id, name, 'artist', personality);
     this.seed = seed;
@@ -39,7 +40,13 @@ export class Artist extends BaseAgent {
       ? this.rng.choice(['slogan', 'poster', 'comic', 'glitch', 'diagram', 'absurd'] as MemeVariant[])
       : undefined;
     const personalityLower = personality.toLowerCase();
-    if (personalityLower.includes('minimal')) {
+    if (forcedPrimaryStyle) {
+      // A specific style was requested (e.g. the user picked a style when creating a new collection)
+      // rather than derived from personality text — honor it directly and pick varied secondaries.
+      this.primaryStyle = forcedPrimaryStyle;
+      this.secondaryStyles = this.rng.shuffle(ART_STYLES.filter((style) => style !== forcedPrimaryStyle)).slice(0, 3);
+      this.experimentationRate = 0.2;
+    } else if (personalityLower.includes('minimal')) {
       this.primaryStyle = 'minimal';
       this.secondaryStyles = ['geometric', 'bauhaus'];
       this.experimentationRate = 0.2;
@@ -51,6 +58,18 @@ export class Artist extends BaseAgent {
       this.primaryStyle = 'expressionist';
       this.secondaryStyles = ['chaotic', 'abstract', 'cubist'];
       this.experimentationRate = 0.45;
+    } else if (personalityLower.includes('pastoral') || personalityLower.includes('wyeth') || personalityLower.includes('rural')) {
+      this.primaryStyle = 'pastoral';
+      this.secondaryStyles = ['post_impressionist', 'silver_gelatin', 'impressionist'];
+      this.experimentationRate = 0.25;
+    } else if (personalityLower.includes('painterly') || personalityLower.includes('post-impressionist') || personalityLower.includes('post impressionist')) {
+      this.primaryStyle = 'post_impressionist';
+      this.secondaryStyles = ['impressionist', 'pastoral', 'expressionist'];
+      this.experimentationRate = 0.4;
+    } else if (personalityLower.includes('photograph') || personalityLower.includes('ansel') || personalityLower.includes('monochrome')) {
+      this.primaryStyle = 'silver_gelatin';
+      this.secondaryStyles = ['pastoral', 'minimal', 'geometric'];
+      this.experimentationRate = 0.25;
     } else if (personalityLower.includes('experimental')) {
       this.primaryStyle = this.rng.choice(['surreal', 'abstract', 'collage', 'digital']);
       this.secondaryStyles = ['organic', 'expressionist', 'impressionist', 'cubist'];
@@ -153,7 +172,7 @@ export class Artist extends BaseAgent {
       `${this.name}'s Work #${worldState.turn}`,
       this.id,
       this.preferredStyle,
-      `A ${this.preferredStyle} piece created by ${this.name}, marked by a recurring ${this.signatureMotif} motif${this.inspiration ? ` and inspired by ${this.inspiration}` : ''}`,
+      `A ${styleLabel(this.preferredStyle)} piece created by ${this.name}, marked by a recurring ${this.signatureMotif} motif${this.inspiration ? ` and inspired by ${this.inspiration}` : ''}`,
       worldState.turn,
       worldState.seedValue + worldState.turn,
       artGenerator.generateArt(this.preferredStyle, this.signatureMotif, caption, this.inspiration, this.memeVariant, this.compositionSignature)
@@ -163,7 +182,7 @@ export class Artist extends BaseAgent {
     worldState.addEvent(
       this.id,
       'artwork_submitted',
-      `${this.name} submitted "${artwork.title}" in ${this.preferredStyle} style`,
+      `${this.name} submitted "${artwork.title}" in ${styleLabel(this.preferredStyle)} style`,
       { artworkId, style: this.preferredStyle }
     );
 

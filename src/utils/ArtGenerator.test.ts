@@ -70,4 +70,34 @@ describe('ArtGenerator', () => {
     expect(diagonal).toContain('M 18 78 L 82 22');
     expect(vertical).toContain('M 50 12 V 88');
   });
+
+  it('renders distinct scene-based styles for pastoral, post-impressionist, and silver gelatin', () => {
+    const pastoral = new ArtGenerator(7).generateArt('pastoral');
+    const postImpressionist = new ArtGenerator(7).generateArt('post_impressionist');
+    const silverGelatin = new ArtGenerator(7).generateArt('silver_gelatin');
+    expect(new Set([pastoral, postImpressionist, silverGelatin]).size).toBe(3);
+    expect(pastoral).toContain('aria-label="pastoral procedural artwork"');
+    expect(postImpressionist).toContain('aria-label="post_impressionist procedural artwork"');
+    expect(silverGelatin).toContain('aria-label="silver_gelatin procedural artwork"');
+  });
+
+  it('is deterministic per seed for each new scene style', () => {
+    expect(new ArtGenerator(55).generateArt('pastoral')).toBe(new ArtGenerator(55).generateArt('pastoral'));
+    expect(new ArtGenerator(55).generateArt('post_impressionist')).toBe(new ArtGenerator(55).generateArt('post_impressionist'));
+    expect(new ArtGenerator(55).generateArt('silver_gelatin')).toBe(new ArtGenerator(55).generateArt('silver_gelatin'));
+  });
+
+  it('produces varied scenes across seeds for the new painterly/photo styles', () => {
+    expect(new ArtGenerator(1).generateArt('pastoral')).not.toBe(new ArtGenerator(2).generateArt('pastoral'));
+    expect(new ArtGenerator(1).generateArt('post_impressionist')).not.toBe(new ArtGenerator(2).generateArt('post_impressionist'));
+    expect(new ArtGenerator(1).generateArt('silver_gelatin')).not.toBe(new ArtGenerator(2).generateArt('silver_gelatin'));
+  });
+
+  it('keeps silver gelatin photography strictly grayscale', () => {
+    const svg = new ArtGenerator(12).generateArt('silver_gelatin');
+    const hexColors = svg.match(/#[0-9a-fA-F]{3,6}/g) ?? [];
+    const grayHexes = new Set(['#050505', '#1a1a1a', '#3d3d3d', '#6b6b6b', '#9e9e9e', '#cfcfcf', '#f5f5f5']);
+    expect(hexColors.length).toBeGreaterThan(0);
+    hexColors.forEach((hex) => expect(grayHexes.has(hex.toLowerCase())).toBe(true));
+  });
 });

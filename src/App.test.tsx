@@ -35,7 +35,7 @@ describe('museum dashboard', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Invite artist' }));
     expect(screen.getAllByText(/joined the museum as a/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Lumen 1 ·|Kite 1 ·|Mara 1 ·|Solace 1 ·|Venn 1 ·|Nova 1 ·/)).toBeTruthy();
+    expect(screen.getByText(/Lumen 1 ·|Kite 1 ·|Mara 1 ·|Solace 1 ·|Venn 1 ·|Nova 1 ·|Wren 1 ·|Vincent 1 ·|Dorothea 1 ·/)).toBeTruthy();
   });
 
   it('archives the current collection when starting a new one and can browse it', () => {

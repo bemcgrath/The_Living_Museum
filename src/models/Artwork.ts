@@ -20,14 +20,31 @@ export type ArtStyle =
   | 'impressionist'
   | 'bauhaus'
   | 'collage'
-  | 'meme';
+  | 'meme'
+  | 'post_impressionist'
+  | 'pastoral'
+  | 'silver_gelatin';
 
 export type MemeVariant = 'slogan' | 'poster' | 'comic' | 'glitch' | 'diagram' | 'absurd';
 
 export const ART_STYLES: ArtStyle[] = [
   'geometric', 'surreal', 'minimal', 'organic', 'chaotic', 'digital',
   'expressionist', 'abstract', 'cubist', 'impressionist', 'bauhaus', 'collage', 'meme',
+  'post_impressionist', 'pastoral', 'silver_gelatin',
 ];
+
+const STYLE_LABEL_OVERRIDES: Partial<Record<ArtStyle, string>> = {
+  post_impressionist: 'Post-Impressionist',
+  pastoral: 'Pastoral (Wyeth-inspired)',
+  silver_gelatin: 'Silver Gelatin (Ansel Adams-inspired)',
+};
+
+/** Friendly, title-cased display name for a style, used anywhere a raw style id would otherwise leak into the UI (e.g. "post_impressionist"). */
+export function styleLabel(style: string): string {
+  const override = STYLE_LABEL_OVERRIDES[style as ArtStyle];
+  if (override) return override;
+  return style.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
 
 export interface ArtworkHistoryEntry {
   turn: number;

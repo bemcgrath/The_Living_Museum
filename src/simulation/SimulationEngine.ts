@@ -1,7 +1,7 @@
 import { AgentAction, BaseAgent } from '../models/Agent';
 import { WorldState } from '../models/WorldState';
 import { createMovement, generateMovementName } from '../models/Movement';
-import { ART_STYLES } from '../models/Artwork';
+import { ART_STYLES, styleLabel } from '../models/Artwork';
 import { Exhibition } from '../models/Exhibition';
 
 export class SimulationEngine {
@@ -162,8 +162,8 @@ export class SimulationEngine {
     const works = displayed.filter((artwork) => artwork.style === dominantStyle).slice(-6);
     const exhibition: Exhibition = {
       id: `exhibition-${this.worldState.turn}`,
-      title: `${dominantStyle[0].toUpperCase()}${dominantStyle.slice(1)} in Motion`,
-      theme: `A study of ${dominantStyle} works and the artists shaping the museum's current taste.`,
+      title: `${styleLabel(dominantStyle)} in Motion`,
+      theme: `A study of ${styleLabel(dominantStyle)} works and the artists shaping the museum's current taste.`,
       style: dominantStyle,
       artworkIds: works.map((work) => work.id),
       artistIds: [...new Set(works.map((work) => work.artist))],

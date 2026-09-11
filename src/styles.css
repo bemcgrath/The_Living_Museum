@@ -39,7 +39,10 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .hero-actions { display: grid; gap: .5rem; justify-items: end; position: relative; }
 .save-notice { font-size: .78rem; color: var(--mint); background: #162420; border: 1px solid #2d5446; padding: .3rem .6rem; border-radius: .4rem; animation: card-in .25s ease-out; }
 .controls-help { margin: 0; max-width: 420px; color: var(--muted); font-size: .72rem; line-height: 1.4; text-align: right; }
-.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; align-items: center; }
+.style-focus-control { color: var(--muted); font-size: .78rem; }
+.style-focus-control select { background: transparent; border: 1px solid #514860; color: var(--muted); border-radius: .4rem; padding: .35rem .5rem; font-size: .82rem; }
+.style-focus-control select:hover, .style-focus-control select:focus { background: #3a2f52; border-color: var(--lavender); color: #fff; box-shadow: 0 0 0 3px #d5a8ff22; }
 .live-indicator { color: var(--muted); font-size: .72rem; letter-spacing: .03em; }
 .live-dot { display: inline-block; width: 7px; height: 7px; margin-right: .35rem; border-radius: 50%; background: var(--lavender); box-shadow: 0 0 0 4px #d5a8ff22; animation: pulse-dot 2.2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px #d5a8ff22; } 50% { box-shadow: 0 0 0 8px #d5a8ff08; } }

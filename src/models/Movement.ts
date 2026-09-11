@@ -57,6 +57,9 @@ export function generateMovementName(style: ArtStyle, turn: number): string {
     bauhaus: 'Bau',
     collage: 'Collag',
     meme: 'Meme',
+    post_impressionist: 'Post-Impress',
+    pastoral: 'Pastoral',
+    silver_gelatin: 'Gelat',
   };
 
   const base = styleBases[style];

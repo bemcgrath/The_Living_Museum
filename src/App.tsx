@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { WorldState } from './models/WorldState';
-import { Artwork, ArtStyle } from './models/Artwork';
+import { ART_STYLES, Artwork, ArtStyle, styleLabel } from './models/Artwork';
 import { Agent } from './models/Agent';
 import { SimulationEngine } from './simulation/SimulationEngine';
 import { Artist } from './simulation/agents/Artist';
@@ -10,13 +10,17 @@ import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 
-function createEngine(seed: number): SimulationEngine {
+/** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
+export type StyleFocus = ArtStyle | 'surprise';
+
+function createEngine(seed: number, styleFocus: StyleFocus = 'surprise'): SimulationEngine {
   const world = new WorldState();
   world.seedValue = seed;
   const engine = new SimulationEngine(world);
-  engine.registerAgent(new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101), () => new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101));
-  engine.registerAgent(new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202), () => new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202));
-  engine.registerAgent(new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303), () => new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303));
+  const forced = styleFocus === 'surprise' ? undefined : styleFocus;
+  engine.registerAgent(new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced), () => new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced));
+  engine.registerAgent(new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced), () => new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced));
+  engine.registerAgent(new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced), () => new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced));
   engine.registerAgent(new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404), () => new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404));
   engine.registerAgent(new Curator('curator-1', 'Sol', 'Focused on variety and access'), () => new Curator('curator-1', 'Sol', 'Focused on variety and access'));
   engine.registerAgent(new Collector('collector-1', 'Nia', 'Patient and speculative', seed + 505), () => new Collector('collector-1', 'Nia', 'Patient and speculative', seed + 505));
@@ -46,7 +50,7 @@ function createSampleArchivedCollection(): ArchivedCollection {
   }
   const sampleWorld = sampleEngine.getWorldState();
   const dominantStyle = sampleWorld.getStats().dominantStyle ?? 'expressionist';
-  const title = `${dominantStyle.charAt(0).toUpperCase()}${dominantStyle.slice(1)} Horizons (Sample Collection)`;
+  const title = `${styleLabel(dominantStyle)} Horizons (Sample Collection)`;
   return {
     id: 'sample-collection-101-10',
     title,
@@ -67,6 +71,10 @@ export default function App() {
   const [seed, setSeed] = useState(42);
   const [seedDraft, setSeedDraft] = useState('42');
   const [speed, setSpeed] = useState(1);
+  // Pending style choice for the *next* collection the user creates ("surprise" = natural style mix).
+  const [styleFocus, setStyleFocus] = useState<StyleFocus>('surprise');
+  // The style focus actually baked into the currently-loaded engine (only changes when a new run starts).
+  const [appliedStyleFocus, setAppliedStyleFocus] = useState<StyleFocus>('surprise');
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [eventAgentFilter, setEventAgentFilter] = useState('all');
@@ -100,7 +108,7 @@ export default function App() {
   });
   const fileInput = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLElement>(null);
-  const engine = useMemo(() => createEngine(seed), [seed]);
+  const engine = useMemo(() => createEngine(seed, appliedStyleFocus), [seed, appliedStyleFocus]);
   const [, render] = useState(0);
   const world = engine.getWorldState();
 
@@ -157,6 +165,7 @@ export default function App() {
     if (world.turn > 0 && !window.confirm('Generate a new collection? This will replace the current museum run.')) return;
     archiveCurrentCollection();
     setSeed(nextSeed);
+    setAppliedStyleFocus(styleFocus);
     setRunSource('fresh');
     setGalleryLimit(60);
   }
@@ -167,6 +176,7 @@ export default function App() {
     archiveCurrentCollection();
     setSeed(nextSeed);
     setSeedDraft(String(nextSeed));
+    setAppliedStyleFocus(styleFocus);
     setRunSource('fresh');
     setGalleryLimit(60);
   }
@@ -263,7 +273,7 @@ export default function App() {
   function archiveCurrentCollection(): 'saved' | 'trimmed' | 'failed' | 'skipped' {
     if (world.turn === 0) return 'skipped';
     const dominantStyle = world.getStats().dominantStyle ?? 'emerging';
-    const title = `${dominantStyle.charAt(0).toUpperCase()}${dominantStyle.slice(1)} Horizons`;
+    const title = `${styleLabel(dominantStyle)} Horizons`;
     const entry: ArchivedCollection = {
       id: `${world.seedValue}-${world.turn}-${Date.now()}`,
       title,
@@ -318,14 +328,17 @@ export default function App() {
       { name: 'Solace', personality: 'Quiet and organic' },
       { name: 'Venn', personality: 'Analytical and geometric' },
       { name: 'Nova', personality: 'Curious and experimental' },
+      { name: 'Wren', personality: 'Wistful and pastoral, in the spirit of Andrew Wyeth' },
+      { name: 'Vincent', personality: 'Painterly and post-impressionist' },
+      { name: 'Dorothea', personality: 'Patient and monochrome, in the spirit of Ansel Adams photography' },
     ];
     const profile = inviteRng.choice(profiles);
     const id = `invited-artist-${invitedNumber}`;
     const name = `${profile.name} ${invitedNumber}`;
     const artist = new Artist(id, name, profile.personality, world.seedValue + 1000 + invitedNumber * 37);
     engine.registerAgent(artist, () => new Artist(id, name, profile.personality, world.seedValue + 1000 + invitedNumber * 37));
-    world.addEvent('museum', 'agent_invited', `${name} joined the museum as a ${artist.primaryStyle} artist.`, { agentId: id, primaryStyle: artist.primaryStyle });
-    setNotice(`${name} joined the museum as a ${artist.primaryStyle} artist!`);
+    world.addEvent('museum', 'agent_invited', `${name} joined the museum as a ${styleLabel(artist.primaryStyle)} artist.`, { agentId: id, primaryStyle: artist.primaryStyle });
+    setNotice(`${name} joined the museum as a ${styleLabel(artist.primaryStyle)} artist!`);
     setTimeout(() => setNotice(null), 3500);
     render((value) => value + 1);
   }
@@ -390,10 +403,24 @@ export default function App() {
             </button>
             <button onClick={() => engine.advanceTurn()} title="Manually step forward one turn">Advance turn</button>
             <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Archive the current museum run to Previous collections without resetting it">Save collection</button>
-            <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run with a random seed">Start new run</button>
+            <label className="filter-control style-focus-control">
+              Style
+              <select
+                aria-label="Style for the next new collection"
+                value={styleFocus}
+                onChange={(event) => setStyleFocus(event.target.value as StyleFocus)}
+                title="Choose a style to focus the next new collection on, or let it surprise you with a natural mix"
+              >
+                <option value="surprise">Surprise me (all styles)</option>
+                {ART_STYLES.map((style) => (
+                  <option key={style} value={style}>{styleLabel(style)}</option>
+                ))}
+              </select>
+            </label>
+            <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run using the chosen style">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
           </div>
-          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
+          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style (or Surprise me) before Start new run to steer what the next collection leans toward. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {notice && <div className="save-notice">{notice}</div>}
         </div>
       </header>
@@ -401,7 +428,7 @@ export default function App() {
         <div className="stats-grid">
           <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong key={stats.currentTurn} className="stat-pop">{stats.currentTurn}</strong><small>unfolding history</small></div>
           <div className="stat-card"><span className="stat-label">Artworks</span><strong key={stats.totalArtworks} className="stat-pop">{stats.totalArtworks}</strong><small>{displayedCount} displayed</small></div>
-          <div className="stat-card"><span className="stat-label">Dominant</span><strong className="stat-value-text">{stats.dominantStyle ?? 'Emerging'}</strong><small>museum taste</small></div>
+          <div className="stat-card"><span className="stat-label">Dominant</span><strong className="stat-value-text">{stats.dominantStyle ? styleLabel(stats.dominantStyle) : 'Emerging'}</strong><small>museum taste</small></div>
           <div className="stat-card"><span className="stat-label">Events</span><strong>{world.getEvents().length}</strong><small>recorded</small></div>
         </div>
         <div className="narrative-card">
@@ -421,7 +448,7 @@ export default function App() {
           <ul className="archive-list">
             {archive.map((entry) => (
               <li key={entry.id}>
-                <span><strong>{entry.title}</strong><small>Turn {entry.turn} · {entry.artworkCount} works · {entry.dominantStyle}</small></span>
+                <span><strong>{entry.title}</strong><small>Turn {entry.turn} · {entry.artworkCount} works · {styleLabel(entry.dominantStyle)}</small></span>
                 <div className="archive-actions">
                   <button onClick={() => setSelectedArchive(entry)}>Details</button>
                   <button className="button-primary small-btn" onClick={() => loadArchivedCollection(entry)}>Browse</button>
@@ -443,7 +470,7 @@ export default function App() {
           </div>
           {movementFilter && (
             <div className="active-filter-chip">
-              Showing <strong>{movementFilter}</strong> works only
+              Showing <strong>{styleLabel(movementFilter)}</strong> works only
               <button className="button-quiet small-btn" onClick={() => setMovementFilter(null)}>Clear</button>
             </div>
           )}
@@ -455,7 +482,7 @@ export default function App() {
                 <div className="art" dangerouslySetInnerHTML={{ __html: artwork.svgData }} />
                 <div className="art-meta">
                   <h3>{artwork.title}</h3>
-                  <p><strong className="style-label">{artwork.style}</strong> · {artwork.status}</p>
+                  <p><strong className="style-label">{styleLabel(artwork.style)}</strong> · {artwork.status}</p>
                   <small className="artist-label">By {agentName(artwork.artist)}</small>
                   {artwork.status === 'acquired' && artwork.acquiredBy && <small className="acquired-label">In {agentName(artwork.acquiredBy)}'s collection</small>}
                   {artwork.signatureMotif && <small className="motif-label">Signature: {artwork.signatureMotif}</small>}
@@ -526,7 +553,7 @@ export default function App() {
           <ul className="agent-list agent-grid">
             {agents.map((agent) => (
               <li key={agent.id} className="interactive-row" onClick={() => setSelectedAgent(agent)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedAgent(agent)}>
-                <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${agent.primaryStyle}` : ''}</strong>
+                <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${styleLabel(agent.primaryStyle)}` : ''}</strong>
                 <span title="Reputation reflects recognition from critics, curators, and collectors.">{agent.role} · reputation {agent.reputation}/100</span>
                 <small>{agent.currentGoal || 'Waiting for the next turn'}</small>
                 <small className="agent-hint">Open profile →</small>
@@ -605,7 +632,7 @@ export default function App() {
             <h2 id="archive-detail-title">{selectedArchive.title}</h2>
             <p>Saved at turn {selectedArchive.turn} as a record of this museum era.</p>
             <dl className="details">
-              <dt>Dominant style</dt><dd>{selectedArchive.dominantStyle}</dd>
+              <dt>Dominant style</dt><dd>{styleLabel(selectedArchive.dominantStyle)}</dd>
               <dt>Artists</dt><dd>{selectedArchive.artistNames.join(', ') || 'None recorded'}</dd>
               <dt>Works</dt><dd>{selectedArchive.artworkCount} total · {selectedArchive.displayedCount} displayed · {selectedArchive.acquiredCount} acquired</dd>
               <dt>Exhibitions</dt><dd>{selectedArchive.exhibitionCount}</dd>
@@ -628,7 +655,7 @@ export default function App() {
             </div>
             <dl className="details">
               <dt>Artist</dt><dd>{agentName(selectedArtwork.artist)}</dd>
-              <dt>Style</dt><dd>{selectedArtwork.style}</dd>
+              <dt>Style</dt><dd>{styleLabel(selectedArtwork.style)}</dd>
               <dt>Signature motif</dt><dd>{selectedArtwork.signatureMotif ?? 'None recorded'}</dd>
               <dt>Inspiration</dt><dd>{selectedArtwork.inspiration ?? 'Independent work'}</dd>
               <dt>Meme form</dt><dd>{selectedArtwork.memeVariant ?? 'Not applicable'}</dd>
