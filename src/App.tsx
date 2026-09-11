@@ -454,8 +454,23 @@ export default function App() {
             </dl>
             <h3>Relationships</h3>
             {selectedAgent.relationships.size === 0 ? <p className="empty">No relationships recorded yet.</p> : (
-              <ul className="relationship-list">
-                {[...selectedAgent.relationships.entries()].map(([id, value]) => <li key={id}><span>{id}</span><strong>{value}</strong></li>)}
+              <ul className="relationship-graph">
+                {[...selectedAgent.relationships.entries()]
+                  .sort((left, right) => right[1] - left[1])
+                  .map(([id, value]) => {
+                    const magnitude = Math.min(100, Math.abs(value));
+                    const tone = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
+                    return (
+                      <li key={id} className={`relationship-row relationship-${tone}`}>
+                        <span className="relationship-name">{agentName(id)}</span>
+                        <span className="relationship-bar-track">
+                          <span className="relationship-bar-mid" />
+                          <span className="relationship-bar-fill" style={{ width: `${magnitude / 2}%`, [value >= 0 ? 'left' : 'right']: '50%' }} />
+                        </span>
+                        <strong className="relationship-value">{value > 0 ? `+${value}` : value}</strong>
+                      </li>
+                    );
+                  })}
               </ul>
             )}
             <h3>Recent memory</h3>
