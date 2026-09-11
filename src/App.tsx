@@ -162,6 +162,23 @@ export default function App() {
   const acquiredCount = artworks.filter((artwork) => artwork.status === 'acquired').length;
   const agentName = (id: string): string => world.getAgent(id)?.name ?? id;
 
+  const agents = world.getAgents();
+  const networkNodes = agents.map((agent, index) => {
+    const angle = (index / agents.length) * Math.PI * 2 - Math.PI / 2;
+    return { agent, x: 130 + Math.cos(angle) * 100, y: 130 + Math.sin(angle) * 100 };
+  });
+  const networkEdges: Array<{ id: string; from: typeof networkNodes[number]; to: typeof networkNodes[number]; value: number }> = [];
+  for (let i = 0; i < agents.length; i += 1) {
+    for (let j = i + 1; j < agents.length; j += 1) {
+      const a = agents[i];
+      const b = agents[j];
+      const value = a.relationships.get(b.id) ?? b.relationships.get(a.id) ?? 0;
+      if (value !== 0) {
+        networkEdges.push({ id: `${a.id}-${b.id}`, from: networkNodes[i], to: networkNodes[j], value });
+      }
+    }
+  }
+
   function archiveCurrentCollection(): void {
     if (world.turn === 0) return;
     const dominantStyle = world.getStats().dominantStyle ?? 'emerging';
@@ -371,8 +388,34 @@ export default function App() {
           </div>
           <h2>Agents</h2>
           <p className="section-help">Artists can be invited to bring new styles and ideas into the museum.</p>
+          {networkEdges.length > 0 && (
+            <div className="network-graph">
+              <svg viewBox="0 0 260 260" role="img" aria-label="Agent relationship network">
+                {networkEdges.map((edge) => (
+                  <line
+                    key={edge.id}
+                    x1={edge.from.x} y1={edge.from.y}
+                    x2={edge.to.x} y2={edge.to.y}
+                    className={edge.value >= 0 ? 'network-edge-positive' : 'network-edge-negative'}
+                    strokeWidth={0.6 + (Math.abs(edge.value) / 100) * 3}
+                    opacity={0.25 + (Math.abs(edge.value) / 100) * 0.6}
+                  />
+                ))}
+                {networkNodes.map((node) => (
+                  <g key={node.agent.id} className="network-node" onClick={() => setSelectedAgent(node.agent)} tabIndex={0} role="button" aria-label={`Open ${node.agent.name}'s profile`} onKeyDown={(event) => event.key === 'Enter' && setSelectedAgent(node.agent)}>
+                    <circle cx={node.x} cy={node.y} r={14} className={`network-dot network-dot-${node.agent.role}`} />
+                    <text x={node.x} y={node.y + 26} textAnchor="middle" className="network-label">{node.agent.name}</text>
+                  </g>
+                ))}
+              </svg>
+              <div className="network-legend">
+                <span><i className="legend-swatch legend-swatch-positive" /> Positive bond</span>
+                <span><i className="legend-swatch legend-swatch-negative" /> Tension</span>
+              </div>
+            </div>
+          )}
           <ul className="agent-list">
-            {world.getAgents().map((agent) => (
+            {agents.map((agent) => (
               <li key={agent.id} className="interactive-row" onClick={() => setSelectedAgent(agent)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedAgent(agent)}>
                 <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${agent.primaryStyle}` : ''}</strong>
                 <span title="Reputation reflects recognition from critics, curators, and collectors.">{agent.role} · reputation {agent.reputation}/100</span>

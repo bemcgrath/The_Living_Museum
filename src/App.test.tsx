@@ -15,7 +15,7 @@ describe('museum dashboard', () => {
     fireEvent.click(screen.getByText(/Ada ·/));
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(screen.getByText('Curious and experimental')).toBeTruthy();
-    expect(screen.getByText('Theo')).toBeTruthy();
+    expect(screen.getAllByText('Theo').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Close agent details' }));
     fireEvent.click(screen.getByText('Advance turn'));
     expect(screen.getByText(/Jo ·/)).toBeTruthy();
