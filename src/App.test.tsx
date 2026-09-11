@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 afterEach(cleanup);
@@ -39,9 +39,10 @@ describe('museum dashboard', () => {
   });
 
   it('archives the current collection when starting a new one and can browse it', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Advance turn' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Generate new collection' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
 
     expect(screen.getByText('Previous collections')).toBeTruthy();
     expect(screen.getByText('Emerging Horizons')).toBeTruthy();
@@ -52,6 +53,7 @@ describe('museum dashboard', () => {
 
     expect(screen.getByText('Resumed save · seed 42')).toBeTruthy();
     expect(screen.getByText('turn').parentElement?.querySelector('strong')?.textContent).toBe('1');
+    confirmSpy.mockRestore();
   });
 
   it('allows manually saving a collection to previous collections', () => {

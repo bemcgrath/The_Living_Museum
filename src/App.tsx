@@ -150,6 +150,7 @@ export default function App() {
   }
 
   function generateCollection(): void {
+    if (world.turn > 0 && !window.confirm('Start a brand new run? The current collection will be saved to Previous collections first.')) return;
     const nextSeed = Math.floor(Math.random() * 2147483647);
     archiveCurrentCollection();
     setSeed(nextSeed);
@@ -276,14 +277,15 @@ export default function App() {
         <div className="hero-actions">
           <div className="live-indicator"><span className="live-dot" /> {engine.isSimulationRunning() ? 'Simulation live' : 'Simulation paused'} <span className="turn-label">Turn {world.turn}</span></div>
           <div className="controls">
-            <button className="button-primary" onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()}>
+            <button className="button-primary" onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()} title={engine.isSimulationRunning() ? 'Pause the automatic simulation' : 'Start the simulation so agents create artworks turn by turn'}>
               {engine.isSimulationRunning() ? 'Pause' : 'Create collection'}
             </button>
-            <button onClick={() => engine.advanceTurn()}>Advance turn</button>
-            <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Save current museum run to Previous collections">Save collection</button>
-            <button className="button-quiet" onClick={generateCollection} title="Replace the current run with a new collection" aria-label="Generate new collection">New collection</button>
+            <button onClick={() => engine.advanceTurn()} title="Manually step forward one turn">Advance turn</button>
+            <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Archive the current museum run to Previous collections without resetting it">Save collection</button>
+            <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run with a random seed">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
           </div>
+          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {saveNotice && <div className="save-notice">{saveNotice}</div>}
         </div>
       </header>
