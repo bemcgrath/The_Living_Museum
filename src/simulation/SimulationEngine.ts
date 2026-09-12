@@ -109,7 +109,11 @@ export class SimulationEngine {
             `${accept ? 'Curator displayed' : 'Curator rejected'} the work.`, { threshold });
           const artist = this.agents.get(artwork.artist);
           if (artist) {
-            artist.reputation = Math.max(0, Math.min(100, artist.reputation + (accept ? 2 : -4)));
+            // A Rebel Artist's motivation is counter-culture influence, not curatorial approval — rejection
+            // draws underground support (a small reputation gain) instead of the reputation hit a mainstream
+            // Artist takes, so rejected rebels stay a live disruptive force rather than being filtered out.
+            const reputationDelta = artist.role === 'rebel_artist' ? (accept ? 1 : 3) : (accept ? 2 : -4);
+            artist.reputation = Math.max(0, Math.min(100, artist.reputation + reputationDelta));
           }
           this.worldState.addEvent(action.agentId, accept ? 'artwork_displayed' : 'artwork_rejected',
             `${accept ? 'Displayed' : 'Rejected'} "${artwork.title}"`, { artworkId: artwork.id });

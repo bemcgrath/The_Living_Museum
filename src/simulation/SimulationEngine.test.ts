@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WorldState } from '../models/WorldState';
 import { createMovement } from '../models/Movement';
 import { Artist } from './agents/Artist';
+import { RebelArtist } from './agents/RebelArtist';
 import { Critic } from './agents/Critic';
 import { Collector } from './agents/Collector';
 import { Curator } from './agents/Curator';
@@ -150,5 +151,37 @@ describe('SimulationEngine', () => {
     expect(restored.getWorldState().getEvents()).toEqual(original.getWorldState().getEvents());
     expect(restored.getWorldState().getAgents().map((agent) => agent.reputation))
       .toEqual(original.getWorldState().getAgents().map((agent) => agent.reputation));
+  });
+
+  it('always steers Rebel Artist submissions away from the museum\'s current dominant style', () => {
+    const world = new WorldState();
+    const engine = new SimulationEngine(world);
+    engine.registerAgent(new Artist('minimalist-1', 'Milo', 'Disciplined and minimal', 10));
+    engine.registerAgent(new Artist('minimalist-2', 'Mina', 'Disciplined and minimal', 11));
+    engine.registerAgent(new Critic('critic', 'Critic', 'Generous', 12));
+    engine.registerAgent(new Curator('curator', 'Curator', 'Experimental'));
+    engine.registerAgent(new RebelArtist('rebel', 'Vex', 'Contrarian and unpredictable', 13));
+    for (let turn = 0; turn < 40; turn++) {
+      engine.advanceTurn();
+      const dominant = world.getDominantStyle();
+      const rebelWorkThisTurn = world.getArtworks().find((artwork) => artwork.artist === 'rebel' && artwork.createdAtTurn === turn);
+      if (dominant && rebelWorkThisTurn) {
+        expect(rebelWorkThisTurn.style).not.toBe(dominant);
+      }
+    }
+    const rebelWorks = world.getArtworks().filter((artwork) => artwork.artist === 'rebel');
+    expect(rebelWorks.length).toBeGreaterThan(0);
+  });
+
+  it('rewards a Rebel Artist with reputation even when curators reject their work', () => {
+    const world = new WorldState();
+    const engine = new SimulationEngine(world);
+    engine.registerAgent(new RebelArtist('rebel', 'Vex', 'Contrarian and unpredictable', 21));
+    engine.registerAgent(new Critic('critic', 'Critic', 'Demanding', 22));
+    engine.registerAgent(new Curator('curator', 'Curator', 'Selective'));
+    for (let turn = 0; turn < 30; turn++) engine.advanceTurn();
+    const rebel = world.getAgent('rebel');
+    expect(world.getArtworks().some((artwork) => artwork.artist === 'rebel' && artwork.status === 'rejected')).toBe(true);
+    expect(rebel?.reputation).toBeGreaterThan(50);
   });
 });

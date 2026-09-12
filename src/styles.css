@@ -97,6 +97,7 @@ select, .simulation-settings input:not([type="range"]) { border: 1px solid #655a
 .network-dot-curator { fill: var(--mint); }
 .network-dot-collector { fill: #8fb4e3; }
 .network-dot-historian { fill: #c9c2da; }
+.network-dot-rebel_artist { fill: #e07a82; }
 .network-label { fill: var(--muted); font-size: 8px; text-transform: capitalize; }
 .network-legend { display: flex; gap: 1rem; margin-top: .5rem; color: var(--muted); font-size: .72rem; }
 .legend-swatch { display: inline-block; width: 10px; height: 3px; margin-right: .35rem; border-radius: 2px; vertical-align: middle; }

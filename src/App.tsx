@@ -4,6 +4,7 @@ import { ART_STYLES, Artwork, ArtStyle, styleLabel } from './models/Artwork';
 import { Agent } from './models/Agent';
 import { SimulationEngine } from './simulation/SimulationEngine';
 import { Artist } from './simulation/agents/Artist';
+import { RebelArtist } from './simulation/agents/RebelArtist';
 import { Critic } from './simulation/agents/Critic';
 import { Curator } from './simulation/agents/Curator';
 import { Collector } from './simulation/agents/Collector';
@@ -21,6 +22,7 @@ function createEngine(seed: number, styleFocus: StyleFocus = 'surprise'): Simula
   engine.registerAgent(new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced), () => new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced));
   engine.registerAgent(new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced), () => new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced));
   engine.registerAgent(new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced), () => new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced));
+  engine.registerAgent(new RebelArtist('rebel-1', 'Vex', 'Contrarian and unpredictable', seed + 707), () => new RebelArtist('rebel-1', 'Vex', 'Contrarian and unpredictable', seed + 707));
   engine.registerAgent(new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404), () => new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404));
   engine.registerAgent(new Curator('curator-1', 'Sol', 'Focused on variety and access'), () => new Curator('curator-1', 'Sol', 'Focused on variety and access'));
   engine.registerAgent(new Collector('collector-1', 'Nia', 'Patient and speculative', seed + 505), () => new Collector('collector-1', 'Nia', 'Patient and speculative', seed + 505));
@@ -553,7 +555,7 @@ export default function App() {
           <ul className="agent-list agent-grid">
             {agents.map((agent) => (
               <li key={agent.id} className="interactive-row" onClick={() => setSelectedAgent(agent)} tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setSelectedAgent(agent)}>
-                <strong>{agent.name}{agent.role === 'artist' && agent.primaryStyle ? ` · ${styleLabel(agent.primaryStyle)}` : ''}</strong>
+                <strong>{agent.name}{(agent.role === 'artist' || agent.role === 'rebel_artist') && agent.primaryStyle ? ` · ${styleLabel(agent.primaryStyle)}` : ''}</strong>
                 <span title="Reputation reflects recognition from critics, curators, and collectors.">{agent.role} · reputation {agent.reputation}/100</span>
                 <small>{agent.currentGoal || 'Waiting for the next turn'}</small>
                 <small className="agent-hint">Open profile →</small>

@@ -311,7 +311,7 @@ src/
 - ✅ Package.json configuration
 
 ### PHASE 2: Agent Implementations
-- ✅ Concrete agent classes (Artist, Curator, Critic, Collector, Historian)
+- ✅ Concrete agent classes (Artist, Curator, Critic, Collector, Historian, Rebel Artist)
 - ✅ Agent decision logic for each role
 - ✅ Relationship scoring system
 - ✅ Memory/learning mechanisms
