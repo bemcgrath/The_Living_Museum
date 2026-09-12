@@ -11,33 +11,63 @@ function weeklySeed(subscriberId: string): number {
   return hash;
 }
 
-/** Resolves a subscriber's style + lead artist for this week's piece. */
-export function resolveWeeklyProfile(subscriber: Subscriber): { style: ArtStyle; profile: GenreProfile } {
+/**
+ * Generic scene subjects, rotated per piece. Without this, an "in the spirit of <artist>" prompt
+ * left to pick its own subject tends to default to that artist's single most famous, most-trained-on
+ * composition (e.g. Monet -> a woman with a parasol in a garden, which is uncomfortably close to his
+ * actual "Woman with a Parasol" series) instead of a genuinely new scene. Forcing a concrete, varied
+ * subject is the main defense against that, alongside the explicit "not a reproduction" instruction
+ * below.
+ */
+const SUBJECT_PROMPTS = [
+  'a sunlit landscape with rolling hills',
+  'a quiet harbor at rest, boats gently rocking',
+  'a wildflower meadow under shifting afternoon light',
+  'a bustling urban street scene',
+  'a still life of fruit and flowers on a wooden table',
+  'a tree-lined riverside path',
+  'a coastal cliffside at sunset',
+  'a rustic farmhouse and surrounding fields',
+  'an open-air market scene',
+  'a quiet, sunlit domestic interior',
+  'a mountain vista at dawn',
+  'a lone figure walking through an autumn forest',
+];
+
+/** Resolves a subscriber's style, lead artist, and scene subject for this week's piece. */
+export function resolveWeeklyProfile(subscriber: Subscriber): { style: ArtStyle; profile: GenreProfile; subject: string } {
   const rng = new RandomGenerator(weeklySeed(subscriber.id));
   const style = (subscriber.preferred_style as ArtStyle | null) ?? rng.choice(ART_STYLES);
+  const subject = rng.choice(SUBJECT_PROMPTS);
 
   if (subscriber.favorite_artist_real_name) {
     const match = GENRE_PROFILES[style].find((candidate) => candidate.realName === subscriber.favorite_artist_real_name);
-    if (match) return { style, profile: match };
+    if (match) return { style, profile: match, subject };
   }
   // No specific artist on file for this style (or "surprise me" landed on a different style than
   // whatever artist they originally searched) — pick from that style's default roster instead.
-  return { style, profile: rng.choice(defaultRosterForStyle(style)) };
+  return { style, profile: rng.choice(defaultRosterForStyle(style)), subject };
 }
 
 /**
  * Builds the actual image-generation prompt. Deliberately steers toward an original composition
  * "in the style of" the named influence rather than asking for a specific painting, consistent with
  * how the procedural generator's docstrings already frame these homages (see ArtGenerator.ts).
+ *
+ * Two defenses against the model reproducing an actual real painting: a concrete, rotated `subject`
+ * (see SUBJECT_PROMPTS above) so it isn't left to default to the artist's most famous composition,
+ * plus an explicit instruction forbidding reproduction of any specific known work.
  */
-export function buildImagePrompt(style: ArtStyle, profile: GenreProfile): string {
+export function buildImagePrompt(style: ArtStyle, profile: GenreProfile, subject: string): string {
   // Most real-artist personality strings already read "<adjectives>, in the spirit of <Name>" — since
   // we state the name separately below, strip that clause so it doesn't repeat itself in the prompt.
   const descriptor = profile.personality.split(/,\s*in the spirit of.*/i)[0].toLowerCase();
   return (
-    `An original, museum-quality piece of ${styleLabel(style)} art, painted in the spirit of ` +
-    `${profile.realName} — ${descriptor}. Square composition, richly detailed, ` +
-    `evocative of the movement's colors and technique. Do not depict any real, identifiable person.`
+    `An entirely original, newly invented ${styleLabel(style)} scene depicting ${subject}, painted in the spirit of ` +
+    `${profile.realName} — ${descriptor}. Square composition, richly detailed, evocative of the movement's colors ` +
+    `and technique. This must be a wholly new composition — NOT a reproduction, recreation, or close imitation of ` +
+    `any specific existing painting by this or any other artist. Do not replicate well-known compositions, subjects, ` +
+    `or motifs strongly associated with this artist's famous individual works. Do not depict any real, identifiable person.`
   );
 }
 

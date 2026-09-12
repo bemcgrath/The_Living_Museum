@@ -10,8 +10,8 @@ import { getResendClient, getFromAddress } from './resend';
  * then wait up to a week to see anything) and the recurring weekly send (api/cron/weekly-art.ts).
  */
 export async function deliverArtworkEmail(subscriber: Subscriber, kind: 'welcome' | 'weekly' = 'weekly'): Promise<void> {
-  const { style, profile } = resolveWeeklyProfile(subscriber);
-  const prompt = buildImagePrompt(style, profile);
+  const { style, profile, subject } = resolveWeeklyProfile(subscriber);
+  const prompt = buildImagePrompt(style, profile, subject);
   const image = await generateArtworkImage(prompt);
   const base64 = await toBase64(image);
   const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';

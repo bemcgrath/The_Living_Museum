@@ -46,10 +46,11 @@ async function main(): Promise<void> {
     updated_at: new Date().toISOString(),
   };
 
-  const { style, profile } = resolveWeeklyProfile(subscriber);
-  const prompt = buildImagePrompt(style, profile);
+  const { style, profile, subject } = resolveWeeklyProfile(subscriber);
+  const prompt = buildImagePrompt(style, profile, subject);
   console.log(`Resolved: ${style} — ${profile.realName} ("${profile.name}")`);
-  console.log(`Subject: ${weeklyEmailSubject(style, profile, 'welcome')}`);
+  console.log(`Scene subject: ${subject}`);
+  console.log(`Email subject: ${weeklyEmailSubject(style, profile, 'welcome')}`);
   console.log(`\nImage prompt that would be sent to the AI provider:\n  ${prompt}\n`);
 
   const hasApiKey = Boolean(process.env.XAI_API_KEY || process.env.OPENAI_API_KEY);

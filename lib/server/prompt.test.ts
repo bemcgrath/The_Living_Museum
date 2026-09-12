@@ -40,6 +40,13 @@ describe('resolveWeeklyProfile', () => {
     expect(GENRE_PROFILES[style].map((p) => p.realName)).toContain(profile.realName);
   });
 
+  it('also picks a non-empty scene subject, to steer the image away from the artist\'s single most famous composition', () => {
+    const subscriber = makeSubscriber({ preferred_style: 'impressionist' });
+    const { subject } = resolveWeeklyProfile(subscriber);
+    expect(typeof subject).toBe('string');
+    expect(subject.length).toBeGreaterThan(0);
+  });
+
   it('is stable for the same subscriber within the same week', () => {
     const subscriber = makeSubscriber({ preferred_style: null, id: 'stable-subscriber' });
     const first = resolveWeeklyProfile(subscriber);
@@ -49,15 +56,19 @@ describe('resolveWeeklyProfile', () => {
 });
 
 describe('buildImagePrompt / weeklyEmailSubject', () => {
-  it('mentions the style and the real artist name, and guards against depicting a real person', () => {
+  it('mentions the style, the real artist name, and the given subject, and guards against reproducing a real work or person', () => {
     const profile = GENRE_PROFILES.impressionist[0];
-    const prompt = buildImagePrompt('impressionist', profile);
+    const prompt = buildImagePrompt('impressionist', profile, 'a quiet harbor at rest, boats gently rocking');
     expect(prompt).toContain('Impressionist');
     expect(prompt).toContain(profile.realName);
-    expect(prompt.toLowerCase()).toContain('not depict any real, identifiable person');
+    expect(prompt).toContain('a quiet harbor at rest, boats gently rocking');
+    const lowerPrompt = prompt.toLowerCase();
+    expect(lowerPrompt).toContain('not depict any real, identifiable person');
+    expect(lowerPrompt).toContain('not a reproduction, recreation, or close imitation');
+    expect(lowerPrompt).toContain("famous individual works");
 
-    const subject = weeklyEmailSubject('impressionist', profile);
-    expect(subject).toContain('Impressionist');
-    expect(subject).toContain(profile.realName);
+    const emailSubject = weeklyEmailSubject('impressionist', profile);
+    expect(emailSubject).toContain('Impressionist');
+    expect(emailSubject).toContain(profile.realName);
   });
 });
