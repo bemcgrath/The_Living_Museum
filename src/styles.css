@@ -90,8 +90,8 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .narrative-card p { margin: 0; color: #e8e2f2; line-height: 1.45; font-size: .88rem; }
 .small-btn { padding: .35rem .65rem; font-size: .75rem; border-radius: .4rem; }
 
-.subscribe-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem; margin: 0 0 1.75rem; padding: 1.1rem 1.25rem; border: 1px solid var(--purple-border); border-radius: .8rem; background: linear-gradient(135deg, #241d38, #1b1824); }
-.subscribe-header { max-width: 26rem; }
+.subscribe-panel { display: flex; flex-direction: column; gap: .9rem; margin: 0 0 1.25rem; padding: 1.1rem 1.25rem; border: 1px solid var(--purple-border); border-radius: .8rem; background: linear-gradient(135deg, #241d38, #1b1824); }
+.subscribe-header { max-width: 34rem; }
 .subscribe-header h2 { margin: .2rem 0 .35rem; font-size: 1.25rem; }
 .subscribe-header .section-help { margin: 0; }
 .subscribe-form { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem 1rem; }
