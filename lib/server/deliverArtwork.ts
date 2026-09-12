@@ -3,6 +3,7 @@ import { generateArtworkImage, toBase64 } from './imageProvider';
 import { resolveWeeklyProfile, buildImagePrompt, weeklyEmailSubject } from './prompt';
 import { weeklyEmailHtml } from './emailTemplate';
 import { getResendClient, getFromAddress } from './resend';
+import { storeArtwork } from './storeArtwork';
 
 /**
  * Generates and emails one subscriber's personalized piece. Shared by the immediate "welcome"
@@ -15,6 +16,14 @@ export async function deliverArtworkEmail(subscriber: Subscriber, kind: 'welcome
   const image = await generateArtworkImage(prompt);
   const base64 = await toBase64(image);
   const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
+
+  // Best-effort: archiving the piece for the community gallery shouldn't block the email itself —
+  // a subscriber's inbox delivery matters more than the archive copy.
+  try {
+    await storeArtwork({ subscriberId: subscriber.id, kind, style, profile, subject, prompt, imageBase64: base64 });
+  } catch (storeError) {
+    console.error(`Failed to archive piece for subscriber ${subscriber.id}`, storeError);
+  }
 
   const resend = getResendClient();
   await resend.emails.send({

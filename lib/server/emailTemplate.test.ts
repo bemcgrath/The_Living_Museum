@@ -15,6 +15,13 @@ describe('weeklyEmailHtml', () => {
     expect(html).toContain('—'); // the welcome heading's em dash
   });
 
+  it('never exposes the real artist name to the subscriber — only the fictional agent name', () => {
+    const profile = GENRE_PROFILES.impressionist[0]; // Oscar / Claude Monet
+    const html = weeklyEmailHtml({ style: 'impressionist', profile, imageUrl: '', siteUrl: '', kind: 'weekly' });
+    expect(html).toContain(profile.name);
+    expect(html).not.toContain(profile.realName);
+  });
+
   it('uses different headings for welcome vs weekly emails', () => {
     const params = { style: 'impressionist' as const, profile: GENRE_PROFILES.impressionist[0], imageUrl: '', siteUrl: '' };
     const welcome = weeklyEmailHtml({ ...params, kind: 'welcome' });

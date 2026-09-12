@@ -4,11 +4,16 @@
  *
  * Choosing a style (instead of "Surprise me") invites that style's first 3 profiles as the
  * collection's artists, so a genre-locked run reads as a room full of kindred artists rather than
- * the generic default trio forced into an unrelated style. Real names are used purely as
- * personality/flavor inspiration for historically significant, long-deceased figures associated
- * with that movement — the simulation never reproduces any specific artwork, only generates its own
- * procedural pieces (see ArtGenerator). Styles with no clean real-world movement (chaotic, digital,
- * meme) use invented personas, consistent with the rest of the roster (Ada, Vex, Lumen, ...).
+ * the generic default trio forced into an unrelated style. `realName` records which historically
+ * significant, long-deceased figure inspired each profile, purely so the image generator can be
+ * told "in the spirit of <realName>" (see lib/server/prompt.ts) and so a search for that name finds
+ * the right profile (findArtistByName) — it is an internal reference only and is never rendered
+ * anywhere a user would see it (no UI text, no email copy, no API response). `personality`, which IS
+ * displayed, deliberately contains no names — just mood/technique descriptors. The simulation never
+ * reproduces any specific artwork, only generates its own procedural or AI pieces (see ArtGenerator,
+ * lib/server/imageProvider.ts). Styles with no clean real-world movement (chaotic, digital, meme)
+ * use invented personas, consistent with the rest of the roster (Ada, Vex, Lumen, ...) — for those,
+ * realName is just the persona's own name.
  *
  * Each style lists more than 3 profiles — the extras beyond the first 3 exist purely so
  * findArtistByName() can recognize more searched names than fit the default roster. Searching for
@@ -25,104 +30,105 @@ import { ArtStyle, ART_STYLES } from '../models/Artwork';
 export interface GenreProfile {
   /** Short display name used as the agent's name in the simulation. */
   name: string;
-  /** Flavor text shown as the agent's personality. */
+  /** Flavor text shown as the agent's personality — deliberately names no real person. */
   personality: string;
-  /** Full name (or, for invented personas, the same as `name`) used for search matching. */
+  /** Internal only — the real historical figure (or, for invented personas, same as `name`) used to
+   *  build image prompts and match searches. Never render this to a user. */
   realName: string;
 }
 
 export const GENRE_PROFILES: Record<ArtStyle, GenreProfile[]> = {
   impressionist: [
-    { name: 'Oscar', personality: 'Luminous and impressionist, in the spirit of Monet', realName: 'Claude Monet' },
-    { name: 'Pierre', personality: 'Warm and sociable impressionist, in the spirit of Renoir', realName: 'Pierre-Auguste Renoir' },
-    { name: 'Edgar', personality: 'Precise and observant impressionist, in the spirit of Degas', realName: 'Edgar Degas' },
-    { name: 'Berthe', personality: 'Intimate domestic impressionist, in the spirit of Morisot', realName: 'Berthe Morisot' },
-    { name: 'Camille', personality: 'Rural light-filled impressionist, in the spirit of Pissarro', realName: 'Camille Pissarro' },
-    { name: 'Mary', personality: 'Tender domestic impressionist, in the spirit of Cassatt', realName: 'Mary Cassatt' },
+    { name: 'Oscar', personality: 'Luminous and impressionist', realName: 'Claude Monet' },
+    { name: 'Pierre', personality: 'Warm and sociable impressionist', realName: 'Pierre-Auguste Renoir' },
+    { name: 'Edgar', personality: 'Precise and observant impressionist', realName: 'Edgar Degas' },
+    { name: 'Berthe', personality: 'Intimate domestic impressionist', realName: 'Berthe Morisot' },
+    { name: 'Camille', personality: 'Rural light-filled impressionist', realName: 'Camille Pissarro' },
+    { name: 'Mary', personality: 'Tender domestic impressionist', realName: 'Mary Cassatt' },
   ],
   post_impressionist: [
-    { name: 'Vincent', personality: 'Painterly and post-impressionist, in the spirit of Van Gogh', realName: 'Vincent van Gogh' },
-    { name: 'Paul', personality: 'Structured and searching post-impressionist, in the spirit of Cézanne', realName: 'Paul Cézanne' },
-    { name: 'Georges', personality: 'Meticulous pointillist post-impressionist, in the spirit of Seurat', realName: 'Georges Seurat' },
-    { name: 'Eugène', personality: 'Bold symbolist post-impressionist, in the spirit of Gauguin', realName: 'Paul Gauguin' },
-    { name: 'Henri', personality: 'Theatrical post-impressionist, in the spirit of Toulouse-Lautrec', realName: 'Henri de Toulouse-Lautrec' },
+    { name: 'Vincent', personality: 'Painterly and post-impressionist', realName: 'Vincent van Gogh' },
+    { name: 'Paul', personality: 'Structured and searching post-impressionist', realName: 'Paul Cézanne' },
+    { name: 'Georges', personality: 'Meticulous pointillist post-impressionist', realName: 'Georges Seurat' },
+    { name: 'Eugène', personality: 'Bold symbolist post-impressionist', realName: 'Paul Gauguin' },
+    { name: 'Henri', personality: 'Theatrical post-impressionist', realName: 'Henri de Toulouse-Lautrec' },
   ],
   pastoral: [
-    { name: 'Wren', personality: 'Wistful and pastoral, in the spirit of Andrew Wyeth', realName: 'Andrew Wyeth' },
-    { name: 'John', personality: 'Atmospheric and pastoral, in the spirit of Constable', realName: 'John Constable' },
-    { name: 'Jean-François', personality: 'Rustic and pastoral, in the spirit of Millet', realName: 'Jean-François Millet' },
-    { name: 'Winslow', personality: 'Weathered maritime pastoral, in the spirit of Winslow Homer', realName: 'Winslow Homer' },
-    { name: 'Camille', personality: 'Silvery atmospheric pastoral, in the spirit of Corot', realName: 'Jean-Baptiste-Camille Corot' },
+    { name: 'Wren', personality: 'Wistful and pastoral', realName: 'Andrew Wyeth' },
+    { name: 'John', personality: 'Atmospheric and pastoral', realName: 'John Constable' },
+    { name: 'Jean-François', personality: 'Rustic and pastoral', realName: 'Jean-François Millet' },
+    { name: 'Winslow', personality: 'Weathered maritime pastoral', realName: 'Winslow Homer' },
+    { name: 'Camille', personality: 'Silvery atmospheric pastoral', realName: 'Jean-Baptiste-Camille Corot' },
   ],
   silver_gelatin: [
-    { name: 'Ansel', personality: 'Patient and monochrome, in the spirit of Ansel Adams photography', realName: 'Ansel Adams' },
-    { name: 'Edward', personality: 'Sharp-focus monochrome, in the spirit of Edward Weston', realName: 'Edward Weston' },
-    { name: 'Dorothea', personality: 'Documentary monochrome, in the spirit of Dorothea Lange', realName: 'Dorothea Lange' },
-    { name: 'Imogen', personality: 'Intimate botanical monochrome, in the spirit of Imogen Cunningham', realName: 'Imogen Cunningham' },
-    { name: 'Minor', personality: 'Symbolic contemplative monochrome, in the spirit of Minor White', realName: 'Minor White' },
+    { name: 'Ansel', personality: 'Patient and monochrome photography', realName: 'Ansel Adams' },
+    { name: 'Edward', personality: 'Sharp-focus monochrome photography', realName: 'Edward Weston' },
+    { name: 'Dorothea', personality: 'Documentary monochrome photography', realName: 'Dorothea Lange' },
+    { name: 'Imogen', personality: 'Intimate botanical monochrome', realName: 'Imogen Cunningham' },
+    { name: 'Minor', personality: 'Symbolic contemplative monochrome', realName: 'Minor White' },
   ],
   cubist: [
-    { name: 'Pablo', personality: 'Fractured and bold cubist, in the spirit of Picasso', realName: 'Pablo Picasso' },
-    { name: 'Georges', personality: 'Analytical and muted cubist, in the spirit of Braque', realName: 'Georges Braque' },
-    { name: 'Juan', personality: 'Crystalline cubist, in the spirit of Juan Gris', realName: 'Juan Gris' },
-    { name: 'Fernand', personality: 'Mechanical bold cubist, in the spirit of Léger', realName: 'Fernand Léger' },
-    { name: 'María', personality: 'Softened cubist, in the spirit of María Blanchard', realName: 'María Blanchard' },
+    { name: 'Pablo', personality: 'Fractured and bold cubist', realName: 'Pablo Picasso' },
+    { name: 'Georges', personality: 'Analytical and muted cubist', realName: 'Georges Braque' },
+    { name: 'Juan', personality: 'Crystalline cubist', realName: 'Juan Gris' },
+    { name: 'Fernand', personality: 'Mechanical bold cubist', realName: 'Fernand Léger' },
+    { name: 'María', personality: 'Softened cubist', realName: 'María Blanchard' },
   ],
   surreal: [
-    { name: 'Salvador', personality: 'Dreamlike and surreal, in the spirit of Dalí', realName: 'Salvador Dalí' },
-    { name: 'René', personality: 'Puzzling and surreal, in the spirit of Magritte', realName: 'René Magritte' },
-    { name: 'Max', personality: 'Uncanny and surreal, in the spirit of Max Ernst', realName: 'Max Ernst' },
-    { name: 'Frida', personality: 'Symbolic personal surrealist, in the spirit of Frida Kahlo', realName: 'Frida Kahlo' },
-    { name: 'Joan', personality: 'Playful biomorphic surrealist, in the spirit of Miró', realName: 'Joan Miró' },
+    { name: 'Salvador', personality: 'Dreamlike and surreal', realName: 'Salvador Dalí' },
+    { name: 'René', personality: 'Puzzling and surreal', realName: 'René Magritte' },
+    { name: 'Max', personality: 'Uncanny and surreal', realName: 'Max Ernst' },
+    { name: 'Frida', personality: 'Symbolic personal surrealist', realName: 'Frida Kahlo' },
+    { name: 'Joan', personality: 'Playful biomorphic surrealist', realName: 'Joan Miró' },
   ],
   expressionist: [
-    { name: 'Edvard', personality: 'Raw and expressionist, in the spirit of Munch', realName: 'Edvard Munch' },
-    { name: 'Ernst', personality: 'Angular and expressionist, in the spirit of Kirchner', realName: 'Ernst Ludwig Kirchner' },
-    { name: 'Egon', personality: 'Intense and expressionist, in the spirit of Schiele', realName: 'Egon Schiele' },
-    { name: 'Franz', personality: 'Symbolic animal expressionist, in the spirit of Franz Marc', realName: 'Franz Marc' },
-    { name: 'Käthe', personality: 'Somber social expressionist, in the spirit of Kollwitz', realName: 'Käthe Kollwitz' },
+    { name: 'Edvard', personality: 'Raw and expressionist', realName: 'Edvard Munch' },
+    { name: 'Ernst', personality: 'Angular and expressionist', realName: 'Ernst Ludwig Kirchner' },
+    { name: 'Egon', personality: 'Intense and expressionist', realName: 'Egon Schiele' },
+    { name: 'Franz', personality: 'Symbolic animal expressionist', realName: 'Franz Marc' },
+    { name: 'Käthe', personality: 'Somber social expressionist', realName: 'Käthe Kollwitz' },
   ],
   abstract: [
-    { name: 'Wassily', personality: 'Musical and abstract, in the spirit of Kandinsky', realName: 'Wassily Kandinsky' },
-    { name: 'Mark', personality: 'Meditative color-field abstract, in the spirit of Rothko', realName: 'Mark Rothko' },
-    { name: 'Jackson', personality: 'Energetic abstract, in the spirit of Pollock', realName: 'Jackson Pollock' },
-    { name: 'Joan', personality: 'Gestural color-field abstract, in the spirit of Joan Mitchell', realName: 'Joan Mitchell' },
-    { name: 'Willem', personality: 'Forceful gestural abstract, in the spirit of de Kooning', realName: 'Willem de Kooning' },
+    { name: 'Wassily', personality: 'Musical and abstract', realName: 'Wassily Kandinsky' },
+    { name: 'Mark', personality: 'Meditative color-field abstract', realName: 'Mark Rothko' },
+    { name: 'Jackson', personality: 'Energetic abstract', realName: 'Jackson Pollock' },
+    { name: 'Joan', personality: 'Gestural color-field abstract', realName: 'Joan Mitchell' },
+    { name: 'Willem', personality: 'Forceful gestural abstract', realName: 'Willem de Kooning' },
   ],
   bauhaus: [
-    { name: 'Paul', personality: 'Whimsical bauhaus, in the spirit of Klee', realName: 'Paul Klee' },
-    { name: 'László', personality: 'Experimental bauhaus, in the spirit of Moholy-Nagy', realName: 'László Moholy-Nagy' },
-    { name: 'Josef', personality: 'Precise geometric bauhaus, in the spirit of Albers', realName: 'Josef Albers' },
-    { name: 'Anni', personality: 'Textile-minded bauhaus, in the spirit of Anni Albers', realName: 'Anni Albers' },
-    { name: 'Marianne', personality: 'Industrial bauhaus, in the spirit of Marianne Brandt', realName: 'Marianne Brandt' },
+    { name: 'Paul', personality: 'Whimsical bauhaus', realName: 'Paul Klee' },
+    { name: 'László', personality: 'Experimental bauhaus', realName: 'László Moholy-Nagy' },
+    { name: 'Josef', personality: 'Precise geometric bauhaus', realName: 'Josef Albers' },
+    { name: 'Anni', personality: 'Textile-minded bauhaus', realName: 'Anni Albers' },
+    { name: 'Marianne', personality: 'Industrial bauhaus', realName: 'Marianne Brandt' },
   ],
   geometric: [
-    { name: 'Piet', personality: 'Ordered and geometric, in the spirit of Mondrian', realName: 'Piet Mondrian' },
-    { name: 'Kazimir', personality: 'Radical and geometric, in the spirit of Malevich', realName: 'Kazimir Malevich' },
-    { name: 'Victor', personality: 'Optical and geometric, in the spirit of Vasarely', realName: 'Victor Vasarely' },
-    { name: 'Theo', personality: 'Rigorous geometric, in the spirit of van Doesburg', realName: 'Theo van Doesburg' },
-    { name: 'Bridget', personality: 'Optical geometric, in the spirit of Bridget Riley', realName: 'Bridget Riley' },
+    { name: 'Piet', personality: 'Ordered and geometric', realName: 'Piet Mondrian' },
+    { name: 'Kazimir', personality: 'Radical and geometric', realName: 'Kazimir Malevich' },
+    { name: 'Victor', personality: 'Optical and geometric', realName: 'Victor Vasarely' },
+    { name: 'Theo', personality: 'Rigorous geometric', realName: 'Theo van Doesburg' },
+    { name: 'Bridget', personality: 'Precise optical geometric', realName: 'Bridget Riley' },
   ],
   minimal: [
-    { name: 'Agnes', personality: 'Disciplined and minimal, in the spirit of Agnes Martin', realName: 'Agnes Martin' },
-    { name: 'Donald', personality: 'Restrained and minimal, in the spirit of Donald Judd', realName: 'Donald Judd' },
-    { name: 'Ellsworth', personality: 'Clean and minimal, in the spirit of Ellsworth Kelly', realName: 'Ellsworth Kelly' },
-    { name: 'Frank', personality: 'Bold-edged minimal, in the spirit of Frank Stella', realName: 'Frank Stella' },
-    { name: 'Dan', personality: 'Luminous minimal, in the spirit of Dan Flavin', realName: 'Dan Flavin' },
+    { name: 'Agnes', personality: 'Disciplined and minimal', realName: 'Agnes Martin' },
+    { name: 'Donald', personality: 'Restrained and minimal', realName: 'Donald Judd' },
+    { name: 'Ellsworth', personality: 'Clean and minimal', realName: 'Ellsworth Kelly' },
+    { name: 'Frank', personality: 'Bold-edged minimal', realName: 'Frank Stella' },
+    { name: 'Dan', personality: 'Luminous minimal', realName: 'Dan Flavin' },
   ],
   organic: [
-    { name: 'Georgia', personality: "Sensuous and organic, in the spirit of O'Keeffe", realName: "Georgia O'Keeffe" },
-    { name: 'Henry', personality: 'Sculptural and organic, in the spirit of Henry Moore', realName: 'Henry Moore' },
-    { name: 'Jean', personality: 'Biomorphic and organic, in the spirit of Jean Arp', realName: 'Jean Arp' },
-    { name: 'Barbara', personality: 'Sculptural organic, in the spirit of Barbara Hepworth', realName: 'Barbara Hepworth' },
-    { name: 'Constantin', personality: 'Reductive sculptural organic, in the spirit of Brâncuși', realName: 'Constantin Brâncuși' },
+    { name: 'Georgia', personality: 'Sensuous and organic', realName: "Georgia O'Keeffe" },
+    { name: 'Henry', personality: 'Sculptural and organic', realName: 'Henry Moore' },
+    { name: 'Jean', personality: 'Biomorphic and organic', realName: 'Jean Arp' },
+    { name: 'Barbara', personality: 'Sculptural organic, drawn to negative space', realName: 'Barbara Hepworth' },
+    { name: 'Constantin', personality: 'Reductive and essential organic', realName: 'Constantin Brâncuși' },
   ],
   collage: [
-    { name: 'Hannah', personality: 'Sharp political collage, in the spirit of Hannah Höch', realName: 'Hannah Höch' },
-    { name: 'Kurt', personality: 'Found-material collage, in the spirit of Kurt Schwitters', realName: 'Kurt Schwitters' },
-    { name: 'Romare', personality: 'Vibrant narrative collage, in the spirit of Romare Bearden', realName: 'Romare Bearden' },
-    { name: 'Robert', personality: 'Found-object collage, in the spirit of Rauschenberg', realName: 'Robert Rauschenberg' },
-    { name: 'Eduardo', personality: 'Pop-inflected collage, in the spirit of Paolozzi', realName: 'Eduardo Paolozzi' },
+    { name: 'Hannah', personality: 'Sharp political collage', realName: 'Hannah Höch' },
+    { name: 'Kurt', personality: 'Found-material collage', realName: 'Kurt Schwitters' },
+    { name: 'Romare', personality: 'Vibrant narrative collage', realName: 'Romare Bearden' },
+    { name: 'Robert', personality: 'Found-object collage, mixed media', realName: 'Robert Rauschenberg' },
+    { name: 'Eduardo', personality: 'Pop-inflected collage', realName: 'Eduardo Paolozzi' },
   ],
   chaotic: [
     { name: 'Riot', personality: 'Untamed and chaotic, chasing collision and noise', realName: 'Riot' },

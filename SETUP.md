@@ -5,11 +5,15 @@ four external accounts. None of this can be created on your behalf — each requ
 identity/billing. Once you have the keys, fill in `.env.local` (copy from `.env.example`) for local
 testing, and set the same variables in the Vercel project's Environment Variables for production.
 
-## 1. Supabase (subscriber database)
+## 1. Supabase (subscriber database + artwork storage)
 
 1. Create a project at supabase.com.
-2. SQL Editor → run `db/schema.sql`.
-3. Project Settings → API → copy the Project URL (`SUPABASE_URL`) and the **service role** key
+2. SQL Editor → run `db/schema.sql` (creates `subscribers` and `pieces`).
+3. Storage → New bucket → name it `artwork`, toggle **Public bucket** on (pieces are AI-generated
+   "in the style of" art, not sensitive — a public bucket keeps the gallery simple with no signed
+   URLs needed). This is where every generated piece gets archived — see `lib/server/storeArtwork.ts`
+   and the "Community gallery" button in the app.
+4. Project Settings → API → copy the Project URL (`SUPABASE_URL`) and the **service role** key
    (`SUPABASE_SERVICE_ROLE_KEY` — not the anon key; these functions run server-side only).
 
 ## 2. Stripe (billing)

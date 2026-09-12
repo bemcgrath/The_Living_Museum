@@ -11,6 +11,7 @@ import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
+import { CommunityGallery } from './components/CommunityGallery';
 import { Subscribe } from './components/Subscribe';
 import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
@@ -112,6 +113,7 @@ export default function App() {
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [galleryMode, setGalleryMode] = useState(false);
+  const [communityGalleryOpen, setCommunityGalleryOpen] = useState(false);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
@@ -221,7 +223,7 @@ export default function App() {
     }
     setStyleFocus(match.style);
     setPrioritizedArtist(match.profile);
-    setNotice(`Found ${match.profile.realName} — ${styleLabel(match.style)} selected. Click "Start new run" to invite their collection.`);
+    setNotice(`Found a match — ${styleLabel(match.style)} selected, led by ${match.profile.name}. Click "Start new run" to invite their collection.`);
     setTimeout(() => setNotice(null), 5500);
   }
 
@@ -372,10 +374,10 @@ export default function App() {
       { name: 'Solace', personality: 'Quiet and organic' },
       { name: 'Venn', personality: 'Analytical and geometric' },
       { name: 'Nova', personality: 'Curious and experimental' },
-      { name: 'Wren', personality: 'Wistful and pastoral, in the spirit of Andrew Wyeth' },
+      { name: 'Wren', personality: 'Wistful and pastoral' },
       { name: 'Vincent', personality: 'Painterly and post-impressionist' },
-      { name: 'Oscar', personality: 'Luminous and impressionist, in the spirit of Monet' },
-      { name: 'Dorothea', personality: 'Patient and monochrome, in the spirit of Ansel Adams photography' },
+      { name: 'Oscar', personality: 'Luminous and impressionist' },
+      { name: 'Dorothea', personality: 'Patient and monochrome photography' },
     ];
     const profile = inviteRng.choice(profiles);
     const id = `invited-artist-${invitedNumber}`;
@@ -477,6 +479,7 @@ export default function App() {
             <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run using the chosen style">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
             <button className="button-quiet" onClick={() => setGalleryMode(true)} title="Watch the collection full-screen as an ambient, self-advancing tour">Gallery mode</button>
+            <button className="button-quiet" onClick={() => setCommunityGalleryOpen(true)} title="Browse the real AI-generated pieces sent to community subscribers">Community gallery</button>
           </div>
           <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style, or search for a favorite artist, before Start new run to invite that genre's own artists (or leave it on Surprise me for a natural mix). Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {notice && <div className="save-notice">{notice}</div>}
@@ -800,6 +803,7 @@ export default function App() {
           onExit={() => setGalleryMode(false)}
         />
       )}
+      {communityGalleryOpen && <CommunityGallery onExit={() => setCommunityGalleryOpen(false)} />}
     </main>
   );
 }

@@ -59,9 +59,9 @@ export function resolveWeeklyProfile(subscriber: Subscriber): { style: ArtStyle;
  * plus an explicit instruction forbidding reproduction of any specific known work.
  */
 export function buildImagePrompt(style: ArtStyle, profile: GenreProfile, subject: string): string {
-  // Most real-artist personality strings already read "<adjectives>, in the spirit of <Name>" — since
-  // we state the name separately below, strip that clause so it doesn't repeat itself in the prompt.
-  const descriptor = profile.personality.split(/,\s*in the spirit of.*/i)[0].toLowerCase();
+  // profile.realName is internal-only (see genreProfiles.ts) — used here to drive the AI prompt,
+  // but this string is sent to the image-generation API, never shown to a subscriber.
+  const descriptor = profile.personality.toLowerCase();
   return (
     `An entirely original, newly invented ${styleLabel(style)} scene depicting ${subject}, painted in the spirit of ` +
     `${profile.realName} — ${descriptor}. Square composition, richly detailed, evocative of the movement's colors ` +
@@ -71,7 +71,9 @@ export function buildImagePrompt(style: ArtStyle, profile: GenreProfile, subject
   );
 }
 
+// profile.name (the fictional agent, e.g. "Oscar") is what's public — profile.realName never appears
+// in subscriber-facing text; see the "internal only" note on GenreProfile in genreProfiles.ts.
 export function weeklyEmailSubject(style: ArtStyle, profile: GenreProfile, kind: 'welcome' | 'weekly' = 'weekly'): string {
-  if (kind === 'welcome') return `Welcome! Your first ${styleLabel(style)} piece, in the spirit of ${profile.realName}`;
-  return `Your weekly ${styleLabel(style)} piece, in the spirit of ${profile.realName}`;
+  if (kind === 'welcome') return `Welcome! Your first ${styleLabel(style)} piece, from ${profile.name}`;
+  return `Your weekly ${styleLabel(style)} piece, from ${profile.name}`;
 }

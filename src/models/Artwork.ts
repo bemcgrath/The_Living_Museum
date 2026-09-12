@@ -33,11 +33,10 @@ export const ART_STYLES: ArtStyle[] = [
   'post_impressionist', 'pastoral', 'silver_gelatin',
 ];
 
+// Deliberately no real artist names here (e.g. no "(Monet-inspired)") — those stay internal-only,
+// used to build image-generation prompts (see lib/server/prompt.ts) and never publicly displayed.
 const STYLE_LABEL_OVERRIDES: Partial<Record<ArtStyle, string>> = {
-  impressionist: 'Impressionist (Monet-inspired)',
   post_impressionist: 'Post-Impressionist',
-  pastoral: 'Pastoral (Wyeth-inspired)',
-  silver_gelatin: 'Silver Gelatin (Ansel Adams-inspired)',
 };
 
 /** Friendly, title-cased display name for a style, used anywhere a raw style id would otherwise leak into the UI (e.g. "post_impressionist"). */

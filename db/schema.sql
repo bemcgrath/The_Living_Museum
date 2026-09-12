@@ -37,3 +37,22 @@ drop trigger if exists subscribers_set_updated_at on subscribers;
 create trigger subscribers_set_updated_at
   before update on subscribers
   for each row execute function set_updated_at();
+
+-- One row per generated piece — the archive behind the community gallery (see api/pieces.ts,
+-- src/components/CommunityGallery.tsx) and what a future "resend" feature would reuse instead of
+-- paying to regenerate. subscriber_id is set null on delete so a piece survives its subscriber
+-- being removed (e.g. after they unsubscribe), since it's part of the museum's shared history now.
+create table if not exists pieces (
+  id uuid primary key default gen_random_uuid(),
+  subscriber_id uuid references subscribers(id) on delete set null,
+  kind text not null check (kind in ('welcome', 'weekly')),
+  style text not null, -- an ArtStyle value (see src/models/Artwork.ts)
+  artist_real_name text not null,
+  subject text not null,
+  prompt text not null,
+  image_path text not null, -- path within the 'artwork' Supabase Storage bucket (see SETUP.md)
+  image_url text not null,  -- public URL, cached so the gallery doesn't need a Storage call per row
+  created_at timestamptz not null default now()
+);
+
+create index if not exists pieces_created_at_idx on pieces (created_at desc);

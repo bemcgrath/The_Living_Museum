@@ -87,7 +87,8 @@ describe('museum dashboard', () => {
     render(<App />);
     fireEvent.change(screen.getByLabelText('Search for a favorite artist to invite into the next collection'), { target: { value: 'Cassatt' } });
     fireEvent.click(screen.getByRole('button', { name: 'Find artist' }));
-    expect(screen.getByText(/Found Mary Cassatt — Impressionist \(Monet-inspired\) selected/)).toBeTruthy();
+    expect(screen.getByText(/Found a match — Impressionist selected, led by Mary\./)).toBeTruthy();
+    expect(screen.queryByText(/Cassatt/)).toBeNull(); // the real name stays internal-only — see genreProfiles.ts
     expect((screen.getByLabelText('Style for the next new collection') as HTMLSelectElement).value).toBe('impressionist');
     fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
     expect(screen.getByText(/Mary ·/)).toBeTruthy();

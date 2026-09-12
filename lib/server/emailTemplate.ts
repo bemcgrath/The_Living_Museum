@@ -21,7 +21,7 @@ export function weeklyEmailHtml(params: {
       <tr><td style="text-align:center;padding-bottom:1.5rem;">
         <p style="color:#d5a8ff;text-transform:uppercase;letter-spacing:.15em;font-size:.7rem;font-weight:700;margin:0 0 .4rem;">The Living Museum</p>
         <h1 style="margin:0;font-size:1.4rem;">${heading}</h1>
-        <p style="color:#aaa0bc;font-size:.9rem;margin:.5rem 0 0;">In the spirit of ${profile.realName}</p>
+        <p style="color:#aaa0bc;font-size:.9rem;margin:.5rem 0 0;">By ${profile.name}</p>
       </td></tr>
       <tr><td style="padding-bottom:1.5rem;">
         <img src="${imageUrl}" alt="This week's ${styleLabel(style)} piece" width="560" style="display:block;width:100%;height:auto;border-radius:12px;" />

@@ -56,7 +56,7 @@ describe('resolveWeeklyProfile', () => {
 });
 
 describe('buildImagePrompt / weeklyEmailSubject', () => {
-  it('mentions the style, the real artist name, and the given subject, and guards against reproducing a real work or person', () => {
+  it('mentions the style, the real artist name, and the given subject in the internal AI prompt, and guards against reproducing a real work or person', () => {
     const profile = GENRE_PROFILES.impressionist[0];
     const prompt = buildImagePrompt('impressionist', profile, 'a quiet harbor at rest, boats gently rocking');
     expect(prompt).toContain('Impressionist');
@@ -66,9 +66,13 @@ describe('buildImagePrompt / weeklyEmailSubject', () => {
     expect(lowerPrompt).toContain('not depict any real, identifiable person');
     expect(lowerPrompt).toContain('not a reproduction, recreation, or close imitation');
     expect(lowerPrompt).toContain("famous individual works");
+  });
 
+  it('never exposes the real artist name in the subscriber-facing email subject', () => {
+    const profile = GENRE_PROFILES.impressionist[0];
     const emailSubject = weeklyEmailSubject('impressionist', profile);
     expect(emailSubject).toContain('Impressionist');
-    expect(emailSubject).toContain(profile.realName);
+    expect(emailSubject).toContain(profile.name);
+    expect(emailSubject).not.toContain(profile.realName);
   });
 });
