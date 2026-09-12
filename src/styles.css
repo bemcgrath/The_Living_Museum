@@ -82,7 +82,28 @@ select, .simulation-settings input:not([type="range"]) { border: 1px solid #655a
 .gallery-more { display: flex; justify-content: center; margin-top: 1.25rem; }
 @keyframes card-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
 .gallery .art-card:nth-child(1) { animation-delay: 0ms; }.gallery .art-card:nth-child(2) { animation-delay: 40ms; }.gallery .art-card:nth-child(3) { animation-delay: 80ms; }.gallery .art-card:nth-child(4) { animation-delay: 120ms; }.gallery .art-card:nth-child(5) { animation-delay: 160ms; }.gallery .art-card:nth-child(6) { animation-delay: 200ms; }.gallery .art-card:nth-child(n+7) { animation-delay: 240ms; }
-.art { aspect-ratio: 1; background: #252033; }.art svg { display: block; width: 100%; height: 100%; }.art-meta { padding: .85rem .95rem 1rem; }.art-meta h3 { margin: 0; font-size: 1rem; }.art-meta p { margin: .35rem 0; color: var(--muted); font-size: .78rem; text-transform: capitalize; }.style-label { color: var(--lavender); font-weight: 700; }.motif-label { display: block; color: var(--mint); text-transform: capitalize; margin-top: .25rem; }.inspiration-label { display: block; color: var(--gold); margin-top: .25rem; }.artist-label { display: block; color: var(--muted); margin-top: .3rem; }.acquired-label { display: block; color: var(--mint); margin-top: .25rem; }
+.art { aspect-ratio: 1; background: #252033; }.art svg { display: block; width: 100%; height: 100%; }
+/* Cinematic reveal: each artwork's shapes pop in one after another instead of appearing all at once,
+   so a new piece reads as being composed rather than pasted in. The first child is always the full-canvas
+   background rect (see ArtGenerator) — it stays static so the "canvas" is there immediately, only the art
+   on top of it assembles. Applies to the gallery card, the detail modal, and agent profile samples, so
+   opening a piece replays the reveal every time. */
+:is(.art, .detail-art, .agent-sample-art) svg > * { animation: shape-reveal .45s cubic-bezier(.2,.7,.3,1) both; transform-origin: center; transform-box: fill-box; }
+:is(.art, .detail-art, .agent-sample-art) svg > :first-child { animation: none; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(2) { animation-delay: 0ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(3) { animation-delay: 40ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(4) { animation-delay: 80ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(5) { animation-delay: 120ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(6) { animation-delay: 160ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(7) { animation-delay: 200ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(8) { animation-delay: 240ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(9) { animation-delay: 280ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(10) { animation-delay: 320ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(11) { animation-delay: 360ms; }
+:is(.art, .detail-art, .agent-sample-art) svg > :nth-child(n+12) { animation-delay: 400ms; }
+@keyframes shape-reveal { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :is(.art, .detail-art, .agent-sample-art) svg > * { animation: none; } }
+.art-meta { padding: .85rem .95rem 1rem; }.art-meta h3 { margin: 0; font-size: 1rem; }.art-meta p { margin: .35rem 0; color: var(--muted); font-size: .78rem; text-transform: capitalize; }.style-label { color: var(--lavender); font-weight: 700; }.motif-label { display: block; color: var(--mint); text-transform: capitalize; margin-top: .25rem; }.inspiration-label { display: block; color: var(--gold); margin-top: .25rem; }.artist-label { display: block; color: var(--muted); margin-top: .3rem; }.acquired-label { display: block; color: var(--mint); margin-top: .25rem; }
 .empty-state { grid-column: 1 / -1; padding: 3.5rem 1rem; border: 1px dashed #514860; border-radius: .8rem; text-align: center; color: var(--muted); }.empty-mark { color: var(--lavender); font-size: 2rem; }.empty-state strong { display: block; margin-top: .6rem; color: var(--ink); }.empty-state p { margin-bottom: 0; font-size: .85rem; }
 .role-guide { display: grid; gap: .65rem; margin-bottom: 2rem; }.role-guide article, aside > h2 { padding: 1rem; border: 1px solid var(--line); border-radius: .7rem; background: var(--panel); }.role-guide strong, .role-guide span, .role-guide small { display: block; }.role-guide strong { color: var(--ink); }.role-guide span { color: var(--lavender); font-size: .8rem; margin-top: .25rem; }.role-guide p { color: var(--muted); font-size: .8rem; line-height: 1.5; margin: .65rem 0; }.role-guide small { color: var(--lavender); }
 .network-graph { background: var(--panel); border: 1px solid var(--line); border-radius: .7rem; padding: .85rem .75rem .6rem; margin-bottom: 1rem; }
