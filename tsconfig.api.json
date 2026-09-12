@@ -15,5 +15,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["api", "lib"]
+  "include": ["api", "lib", "scripts"]
 }

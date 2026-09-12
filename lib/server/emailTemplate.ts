@@ -12,6 +12,10 @@ export function weeklyEmailHtml(params: {
   const heading = kind === 'welcome' ? `Welcome — here's your first ${styleLabel(style)} piece` : `Your weekly ${styleLabel(style)} piece`;
   return `<!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
   <body style="margin:0;padding:0;background:#111018;color:#eeeaf5;font-family:Inter,ui-sans-serif,system-ui,sans-serif;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:2rem 1rem;">
       <tr><td style="text-align:center;padding-bottom:1.5rem;">

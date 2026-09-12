@@ -51,6 +51,19 @@ Pick one (see `lib/server/imageProvider.ts`):
 3. Deploy. The weekly cron (`vercel.json`) runs automatically once deployed — no manual setup.
 4. Go back and finish step 2.4 above now that you have a real domain for the webhook endpoint.
 
+## Previewing the email before setting anything up
+
+`npx vite-node scripts/preview-weekly-email.ts [style] [favoriteArtistName]` renders the actual
+email template locally with no accounts needed — e.g.
+`npx vite-node scripts/preview-weekly-email.ts impressionist "Claude Monet"`. It prints the exact
+image prompt that would be sent to the AI provider, and writes a viewable HTML file to
+`docs/weekly-email-preview.html` (open it in a browser, or serve `docs/` locally since browsers
+block `file://` navigation from automation tools — e.g. `python -m http.server` in that folder).
+
+Without `XAI_API_KEY`/`OPENAI_API_KEY` set, it uses the free procedural `ArtGenerator` as a
+stand-in placeholder image (no cost, no API call) so you can check the layout/copy. With a key set
+in your shell environment, it generates one real AI image instead (real cost, ~$0.02–$0.07).
+
 ## Testing before going live
 
 - Use [Stripe test cards](https://docs.stripe.com/testing) to subscribe through the actual form.

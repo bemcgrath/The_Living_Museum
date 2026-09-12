@@ -31,9 +31,12 @@ export function resolveWeeklyProfile(subscriber: Subscriber): { style: ArtStyle;
  * how the procedural generator's docstrings already frame these homages (see ArtGenerator.ts).
  */
 export function buildImagePrompt(style: ArtStyle, profile: GenreProfile): string {
+  // Most real-artist personality strings already read "<adjectives>, in the spirit of <Name>" — since
+  // we state the name separately below, strip that clause so it doesn't repeat itself in the prompt.
+  const descriptor = profile.personality.split(/,\s*in the spirit of.*/i)[0].toLowerCase();
   return (
     `An original, museum-quality piece of ${styleLabel(style)} art, painted in the spirit of ` +
-    `${profile.realName} (${profile.personality.toLowerCase()}). Square composition, richly detailed, ` +
+    `${profile.realName} — ${descriptor}. Square composition, richly detailed, ` +
     `evocative of the movement's colors and technique. Do not depict any real, identifiable person.`
   );
 }
