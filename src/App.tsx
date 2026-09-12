@@ -11,25 +11,26 @@ import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
-import { GENRE_PROFILES, GenreProfile } from './data/genreProfiles';
+import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
 /** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
 export type StyleFocus = ArtStyle | 'surprise';
 
 const DEFAULT_ARTIST_PROFILES: GenreProfile[] = [
-  { name: 'Ada', personality: 'Curious and experimental' },
-  { name: 'Milo', personality: 'Disciplined and minimal' },
-  { name: 'Jo', personality: 'Bold and meme-driven' },
+  { name: 'Ada', personality: 'Curious and experimental', realName: 'Ada' },
+  { name: 'Milo', personality: 'Disciplined and minimal', realName: 'Milo' },
+  { name: 'Jo', personality: 'Bold and meme-driven', realName: 'Jo' },
 ];
 
-function createEngine(seed: number, styleFocus: StyleFocus = 'surprise'): SimulationEngine {
+function createEngine(seed: number, styleFocus: StyleFocus = 'surprise', prioritizedArtist: GenreProfile | null = null): SimulationEngine {
   const world = new WorldState();
   world.seedValue = seed;
   const engine = new SimulationEngine(world);
   const forced = styleFocus === 'surprise' ? undefined : styleFocus;
   // Choosing a specific style invites that genre's own themed roster (see genreProfiles.ts) instead
   // of the generic default trio, so a genre-locked collection reads as a room of kindred artists.
-  const artistProfiles = styleFocus === 'surprise' ? DEFAULT_ARTIST_PROFILES : GENRE_PROFILES[styleFocus];
+  // Searching for a specific artist (see handleArtistSearch) guarantees they're one of the 3.
+  const artistProfiles = styleFocus === 'surprise' ? DEFAULT_ARTIST_PROFILES : rosterForStyle(styleFocus, prioritizedArtist);
   artistProfiles.forEach((profile, index) => {
     const id = `artist-${index + 1}`;
     const artistSeed = seed + 101 + index * 101;
@@ -93,6 +94,11 @@ export default function App() {
   const [styleFocus, setStyleFocus] = useState<StyleFocus>('surprise');
   // The style focus actually baked into the currently-loaded engine (only changes when a new run starts).
   const [appliedStyleFocus, setAppliedStyleFocus] = useState<StyleFocus>('surprise');
+  // A specific artist found via search (see handleArtistSearch) to guarantee as one of the next
+  // collection's 3 genre artists, rather than just whichever 3 default that style's roster.
+  const [prioritizedArtist, setPrioritizedArtist] = useState<GenreProfile | null>(null);
+  const [appliedPrioritizedArtist, setAppliedPrioritizedArtist] = useState<GenreProfile | null>(null);
+  const [artistQuery, setArtistQuery] = useState('');
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [eventAgentFilter, setEventAgentFilter] = useState('all');
@@ -127,7 +133,10 @@ export default function App() {
   });
   const fileInput = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLElement>(null);
-  const engine = useMemo(() => createEngine(seed, appliedStyleFocus), [seed, appliedStyleFocus]);
+  const engine = useMemo(
+    () => createEngine(seed, appliedStyleFocus, appliedPrioritizedArtist),
+    [seed, appliedStyleFocus, appliedPrioritizedArtist],
+  );
   const [, render] = useState(0);
   const world = engine.getWorldState();
 
@@ -185,6 +194,7 @@ export default function App() {
     archiveCurrentCollection();
     setSeed(nextSeed);
     setAppliedStyleFocus(styleFocus);
+    setAppliedPrioritizedArtist(prioritizedArtist);
     setRunSource('fresh');
     setGalleryLimit(60);
   }
@@ -196,8 +206,22 @@ export default function App() {
     setSeed(nextSeed);
     setSeedDraft(String(nextSeed));
     setAppliedStyleFocus(styleFocus);
+    setAppliedPrioritizedArtist(prioritizedArtist);
     setRunSource('fresh');
     setGalleryLimit(60);
+  }
+
+  function handleArtistSearch(): void {
+    const match = findArtistByName(artistQuery);
+    if (!match) {
+      setNotice(`No artist matching "${artistQuery.trim()}" in the collection yet — try a style from the dropdown instead.`);
+      setTimeout(() => setNotice(null), 4500);
+      return;
+    }
+    setStyleFocus(match.style);
+    setPrioritizedArtist(match.profile);
+    setNotice(`Found ${match.profile.realName} — ${styleLabel(match.style)} selected. Click "Start new run" to invite their collection.`);
+    setTimeout(() => setNotice(null), 5500);
   }
 
   const displayedCount = artworks.filter((artwork) => artwork.status === 'displayed').length;
@@ -428,7 +452,7 @@ export default function App() {
               <select
                 aria-label="Style for the next new collection"
                 value={styleFocus}
-                onChange={(event) => setStyleFocus(event.target.value as StyleFocus)}
+                onChange={(event) => { setStyleFocus(event.target.value as StyleFocus); setPrioritizedArtist(null); }}
                 title="Choose a style to invite that genre's own themed roster of artists for the next new collection, or let it surprise you with a natural mix"
               >
                 <option value="surprise">Surprise me (all styles)</option>
@@ -437,11 +461,23 @@ export default function App() {
                 ))}
               </select>
             </label>
+            <label className="filter-control style-focus-control artist-search-control">
+              Artist
+              <input
+                aria-label="Search for a favorite artist to invite into the next collection"
+                value={artistQuery}
+                onChange={(event) => setArtistQuery(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleArtistSearch()}
+                placeholder="e.g. Monet"
+                title="Search the collection for a favorite artist — a match selects their style and guarantees them a spot in the roster"
+              />
+            </label>
+            <button className="button-quiet" onClick={handleArtistSearch} title="Look up the searched artist and select their style for the next new collection">Find artist</button>
             <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run using the chosen style">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
             <button className="button-quiet" onClick={() => setGalleryMode(true)} title="Watch the collection full-screen as an ambient, self-advancing tour">Gallery mode</button>
           </div>
-          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style before Start new run to invite that genre's own artists (or leave it on Surprise me for a natural mix). Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
+          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style, or search for a favorite artist, before Start new run to invite that genre's own artists (or leave it on Surprise me for a natural mix). Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {notice && <div className="save-notice">{notice}</div>}
         </div>
       </header>

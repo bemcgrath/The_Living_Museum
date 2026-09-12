@@ -83,6 +83,33 @@ describe('museum dashboard', () => {
     expect(screen.queryByText(/Ada ·/)).toBeNull();
   });
 
+  it('finds a searched artist, selects their style, and guarantees them a roster spot', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search for a favorite artist to invite into the next collection'), { target: { value: 'Cassatt' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Find artist' }));
+    expect(screen.getByText(/Found Mary Cassatt — Impressionist \(Monet-inspired\) selected/)).toBeTruthy();
+    expect((screen.getByLabelText('Style for the next new collection') as HTMLSelectElement).value).toBe('impressionist');
+    fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
+    expect(screen.getByText(/Mary ·/)).toBeTruthy();
+  });
+
+  it('reports when a searched artist is not recognized instead of guessing', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search for a favorite artist to invite into the next collection'), { target: { value: 'Nobody Famous' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Find artist' }));
+    expect(screen.getByText(/No artist matching "Nobody Famous"/)).toBeTruthy();
+  });
+
+  it('clears a searched artist priority when the style is changed manually afterward', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Search for a favorite artist to invite into the next collection'), { target: { value: 'Monet' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Find artist' }));
+    fireEvent.change(screen.getByLabelText('Style for the next new collection'), { target: { value: 'cubist' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
+    expect(screen.getByText(/Pablo ·/)).toBeTruthy();
+    expect(screen.queryByText(/Oscar ·/)).toBeNull();
+  });
+
   it('keeps the default varied roster when no style is chosen', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));

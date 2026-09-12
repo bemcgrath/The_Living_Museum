@@ -43,6 +43,8 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .style-focus-control { color: var(--muted); font-size: .78rem; }
 .style-focus-control select { background: transparent; border: 1px solid #514860; color: var(--muted); border-radius: .4rem; padding: .35rem .5rem; font-size: .82rem; }
 .style-focus-control select:hover, .style-focus-control select:focus { background: #3a2f52; border-color: var(--lavender); color: #fff; box-shadow: 0 0 0 3px #d5a8ff22; }
+.artist-search-control input { width: 8rem; background: transparent; border: 1px solid #514860; color: var(--ink); border-radius: .4rem; padding: .35rem .5rem; font-size: .82rem; }
+.artist-search-control input:hover, .artist-search-control input:focus { background: #3a2f52; border-color: var(--lavender); box-shadow: 0 0 0 3px #d5a8ff22; }
 .live-indicator { color: var(--muted); font-size: .72rem; letter-spacing: .03em; }
 .live-dot { display: inline-block; width: 7px; height: 7px; margin-right: .35rem; border-radius: 50%; background: var(--lavender); box-shadow: 0 0 0 4px #d5a8ff22; animation: pulse-dot 2.2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px #d5a8ff22; } 50% { box-shadow: 0 0 0 8px #d5a8ff08; } }
