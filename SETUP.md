@@ -8,7 +8,9 @@ testing, and set the same variables in the Vercel project's Environment Variable
 ## 1. Supabase (subscriber database + artwork storage)
 
 1. Create a project at supabase.com.
-2. SQL Editor → run `db/schema.sql` (creates `subscribers` and `pieces`).
+2. SQL Editor → run `db/schema.sql` (creates `subscribers`, `pieces`, and `collections`). If you ran
+   this file before `collections` existed, re-run it — the migration block at the bottom (adding
+   `pieces.collection_id` and the `collections` table) is safe to run again.
 3. Storage → New bucket → name it `artwork`, toggle **Public bucket** on (pieces are AI-generated
    "in the style of" art, not sensitive — a public bucket keeps the gallery simple with no signed
    URLs needed). This is where every generated piece gets archived — see `lib/server/storeArtwork.ts`
@@ -67,6 +69,20 @@ block `file://` navigation from automation tools — e.g. `python -m http.server
 Without `XAI_API_KEY`/`OPENAI_API_KEY` set, it uses the free procedural `ArtGenerator` as a
 stand-in placeholder image (no cost, no API call) so you can check the layout/copy. With a key set
 in your shell environment, it generates one real AI image instead (real cost, ~$0.02–$0.07).
+
+## Generating a showcase collection
+
+`npx vite-node scripts/generate-showcase.ts --style=impressionist --name="The Impressionist Room"`
+prints the artist/subject plan and a cost estimate, then exits **without spending anything or
+writing to the database** — re-run with `--yes` to actually generate. Unlike the email preview,
+this reads `.env.local` directly (via `scripts/loadEnvLocal.ts`) and always requires real Supabase +
+image-provider keys — there's no free placeholder mode, since the entire point is real AI art.
+
+Cost is roughly `count × $0.07` on OpenAI (`--provider=openai`) or `count × $0.05` on xAI (default
+`--provider=xai`); the default `--count` is 10. Featured collections (the default — pass
+`--no-feature` to generate without publishing) appear automatically on the main page above the
+signup form. Showcase pieces are deliberately excluded from the Community gallery, which only shows
+pieces actually emailed to subscribers.
 
 ## Testing before going live
 

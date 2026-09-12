@@ -2,8 +2,16 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
-afterEach(cleanup);
-beforeEach(() => window.localStorage.clear());
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+beforeEach(() => {
+  window.localStorage.clear();
+  // <Showcase /> fetches on mount; jsdom has no relative-URL base, so an unstubbed fetch rejects and
+  // produces act() noise in every test here. An empty showcase renders nothing (see Showcase.tsx).
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ collections: [] }) }));
+});
 
 describe('museum dashboard', () => {
   it('advances the simulation and opens agent details', () => {

@@ -12,6 +12,7 @@ import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
 import { CommunityGallery } from './components/CommunityGallery';
+import { Showcase } from './components/Showcase';
 import { Subscribe } from './components/Subscribe';
 import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
@@ -500,6 +501,7 @@ export default function App() {
           <p>{world.getNarrativeSummary()}</p>
         </div>
       </section>
+      <Showcase />
       <Subscribe />
       <section className="archive-panel compact-archive">
         <div className="archive-header">

@@ -98,6 +98,16 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .subscribe-form input, .subscribe-form select { min-width: 11rem; background: transparent; border: 1px solid #514860; color: var(--ink); border-radius: .4rem; padding: .5rem .6rem; font-size: .85rem; }
 .subscribe-form input:hover, .subscribe-form select:hover, .subscribe-form input:focus, .subscribe-form select:focus { background: #3a2f52; border-color: var(--lavender); box-shadow: 0 0 0 3px #d5a8ff22; }
 .subscribe-error { flex-basis: 100%; margin: .5rem 0 0; color: #e07a82; font-size: .82rem; }
+.showcase-panel { margin: 0 0 1.25rem; padding: 1.1rem 1.25rem; border: 1px solid var(--purple-border); border-radius: .8rem; background: linear-gradient(135deg, #1f1a30, #1b1824); }
+.showcase-header { max-width: 34rem; margin-bottom: .9rem; }
+.showcase-header h2 { margin: .2rem 0 .35rem; font-size: 1.25rem; }
+.showcase-header .section-help { margin: 0; }
+.showcase-collection + .showcase-collection { margin-top: 1.25rem; }
+.showcase-collection-title { margin: 0 0 .4rem; font-size: 1rem; color: var(--lavender); }
+.showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+.showcase-card { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; overflow: hidden; animation: card-in .42s cubic-bezier(.2,.7,.3,1) backwards; }
+.showcase-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.showcase-card figcaption { padding: .5rem .6rem; color: var(--muted); font-size: .72rem; }
 .compact-archive { margin: 0 0 1.75rem; padding: .9rem 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--panel); }
 .archive-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: .6rem; }
 .archive-header h2 { font-size: 1.15rem; }

@@ -5,6 +5,9 @@ import type { GenreProfile } from '../../src/data/genreProfiles';
 
 const BUCKET = 'artwork';
 
+/** Why a piece exists: emailed to a subscriber (welcome/weekly), or generated for a site showcase collection. */
+export type PieceKind = 'welcome' | 'weekly' | 'showcase';
+
 export interface StoredPiece {
   id: string;
   imageUrl: string;
@@ -15,17 +18,22 @@ export interface StoredPiece {
  * the archive behind the community gallery (api/pieces.ts) and what a future "resend" feature
  * would reuse instead of paying to regenerate. Best-effort by design (see deliverArtwork.ts): a
  * storage hiccup should never prevent a subscriber's email from sending.
+ *
+ * Showcase pieces (see scripts/generate-showcase.ts) have a null subscriberId and a non-null
+ * collectionId, and are excluded from api/pieces.ts — they're marketing art, not something emailed
+ * to anyone.
  */
 export async function storeArtwork(params: {
   subscriberId: string | null;
-  kind: 'welcome' | 'weekly';
+  kind: PieceKind;
   style: ArtStyle;
   profile: GenreProfile;
   subject: string;
   prompt: string;
   imageBase64: string;
+  collectionId?: string | null;
 }): Promise<StoredPiece> {
-  const { subscriberId, kind, style, profile, subject, prompt, imageBase64 } = params;
+  const { subscriberId, kind, style, profile, subject, prompt, imageBase64, collectionId } = params;
   const supabase = getSupabaseClient();
   const path = `${style}/${new Date().toISOString().slice(0, 10)}-${randomUUID()}.png`;
 
@@ -47,6 +55,7 @@ export async function storeArtwork(params: {
       prompt,
       image_path: path,
       image_url: publicUrlData.publicUrl,
+      collection_id: collectionId ?? null,
     })
     .select('id')
     .single();

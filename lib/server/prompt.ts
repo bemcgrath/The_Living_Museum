@@ -18,8 +18,11 @@ function weeklySeed(subscriberId: string): number {
  * actual "Woman with a Parasol" series) instead of a genuinely new scene. Forcing a concrete, varied
  * subject is the main defense against that, alongside the explicit "not a reproduction" instruction
  * below.
+ *
+ * Also used to spread subjects across a curated showcase collection (scripts/generate-showcase.ts)
+ * so a batch of pieces doesn't repeat the same scene.
  */
-const SUBJECT_PROMPTS = [
+export const SUBJECT_PROMPTS = [
   'a sunlit landscape with rolling hills',
   'a quiet harbor at rest, boats gently rocking',
   'a wildflower meadow under shifting afternoon light',

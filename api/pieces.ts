@@ -4,9 +4,12 @@ import type { VercelRequest, VercelResponse } from '../lib/server/types';
 const PAGE_SIZE = 60;
 
 /**
- * Public, read-only: the community gallery's data source. Deliberately excludes subscriber_id/
- * email (nothing here identifies a subscriber) and artist_real_name (internal reference only —
- * see the GenreProfile doc comment in src/data/genreProfiles.ts; never surfaced to a viewer).
+ * Public, read-only: the community gallery's data source — specifically pieces that were actually
+ * emailed to a subscriber. Deliberately excludes subscriber_id/email (nothing here identifies a
+ * subscriber) and artist_real_name (internal reference only — see the GenreProfile doc comment in
+ * src/data/genreProfiles.ts; never surfaced to a viewer). Showcase collection pieces (kind
+ * 'showcase') are marketing art, never emailed to anyone — they're served separately by
+ * api/showcase.ts and excluded here so they don't dominate this "sent to subscribers" gallery.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
@@ -18,6 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const { data, error } = await supabase
     .from('pieces')
     .select('id, style, subject, image_url, created_at')
+    .in('kind', ['welcome', 'weekly'])
     .order('created_at', { ascending: false })
     .limit(PAGE_SIZE);
 

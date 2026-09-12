@@ -56,7 +56,7 @@ Everything is deterministic: a seeded random generator (`src/utils/RandomGenerat
 
 ## Join the community *(optional, self-hosted)*
 
-A weekly-email feature exists in this repo but is **off by default** and requires you to stand up your own accounts (Stripe, Supabase, Resend, and an image-gen API) — nothing is deployed or billed unless you set it up yourself. See [`SETUP.md`](SETUP.md) for the full walkthrough if you want to run your own $1/month "a piece of art in your inbox every week" community. Every generated piece is archived and browsable in-app via **Community gallery**. Real-artist names (Monet, Wyeth, ...) are used internally to steer AI generation toward that style, but are never shown publicly — only the fictional in-museum agent (Oscar, Wren, ...) is.
+A weekly-email feature exists in this repo but is **off by default** and requires you to stand up your own accounts (Stripe, Supabase, Resend, and an image-gen API) — nothing is deployed or billed unless you set it up yourself. See [`SETUP.md`](SETUP.md) for the full walkthrough if you want to run your own $1/month "a piece of art in your inbox every week" community. Every generated piece is archived and browsable in-app via **Community gallery**. Real-artist names (Monet, Wyeth, ...) are used internally to steer AI generation toward that style, but are never shown publicly — only the fictional in-museum agent (Oscar, Wren, ...) is. The landing page also shows a curated **showcase** of real generated pieces (`scripts/generate-showcase.ts`) as proof-of-quality art next to the signup form.
 
 ## Tech stack
 

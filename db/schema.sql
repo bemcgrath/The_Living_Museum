@@ -45,7 +45,7 @@ create trigger subscribers_set_updated_at
 create table if not exists pieces (
   id uuid primary key default gen_random_uuid(),
   subscriber_id uuid references subscribers(id) on delete set null,
-  kind text not null check (kind in ('welcome', 'weekly')),
+  kind text not null check (kind in ('welcome', 'weekly', 'showcase')),
   style text not null, -- an ArtStyle value (see src/models/Artwork.ts)
   artist_real_name text not null,
   subject text not null,
@@ -56,3 +56,38 @@ create table if not exists pieces (
 );
 
 create index if not exists pieces_created_at_idx on pieces (created_at desc);
+
+-- A named, curated group of pieces generated together for display on the site (see
+-- scripts/generate-showcase.ts, api/showcase.ts, src/components/Showcase.tsx). Unlike `pieces` with
+-- kind 'welcome'/'weekly', showcase pieces belong to no subscriber and are never emailed — they are
+-- marketing/proof-of-quality art, generated deliberately by an operator running the CLI.
+--
+-- featured_at doubles as the "currently displayed on the site" flag and the display ordering key:
+-- null = generated but not shown, non-null = shown, most recently featured first. This allows more
+-- than one genre's collection on the page at once without needing a separate boolean + ordering column.
+create table if not exists collections (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique, -- stable handle the generator script upserts on, e.g. 'impressionist-showcase'
+  name text not null,        -- public display title, e.g. 'The Impressionist Room'
+  style text not null,       -- an ArtStyle value (see src/models/Artwork.ts)
+  blurb text,                -- optional public one-line description shown under the title
+  featured_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists collections_featured_at_idx
+  on collections (featured_at desc) where featured_at is not null;
+
+-- --- Migration for databases created before collections existed -------------------------------
+-- Safe to re-run: every statement below is idempotent (this file is pasted whole into Supabase's
+-- SQL editor, not run through a migration tool). Existing installs must re-run at least this block.
+
+-- Showcase pieces point at their collection. `set null` (not cascade) mirrors subscriber_id: a piece
+-- is part of the museum's history and survives its collection being deleted.
+alter table pieces add column if not exists collection_id uuid references collections(id) on delete set null;
+
+create index if not exists pieces_collection_id_idx on pieces (collection_id);
+
+-- Postgres can't alter a CHECK in place; the inline constraint above is auto-named pieces_kind_check.
+alter table pieces drop constraint if exists pieces_kind_check;
+alter table pieces add constraint pieces_kind_check check (kind in ('welcome', 'weekly', 'showcase'));
