@@ -80,6 +80,14 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .narrative-card p { margin: 0; color: #e8e2f2; line-height: 1.45; font-size: .88rem; }
 .small-btn { padding: .35rem .65rem; font-size: .75rem; border-radius: .4rem; }
 
+.subscribe-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem; margin: 0 0 1.75rem; padding: 1.1rem 1.25rem; border: 1px solid var(--purple-border); border-radius: .8rem; background: linear-gradient(135deg, #241d38, #1b1824); }
+.subscribe-header { max-width: 26rem; }
+.subscribe-header h2 { margin: .2rem 0 .35rem; font-size: 1.25rem; }
+.subscribe-header .section-help { margin: 0; }
+.subscribe-form { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem 1rem; }
+.subscribe-form input, .subscribe-form select { min-width: 11rem; background: transparent; border: 1px solid #514860; color: var(--ink); border-radius: .4rem; padding: .5rem .6rem; font-size: .85rem; }
+.subscribe-form input:hover, .subscribe-form select:hover, .subscribe-form input:focus, .subscribe-form select:focus { background: #3a2f52; border-color: var(--lavender); box-shadow: 0 0 0 3px #d5a8ff22; }
+.subscribe-error { flex-basis: 100%; margin: .5rem 0 0; color: #e07a82; font-size: .82rem; }
 .compact-archive { margin: 0 0 1.75rem; padding: .9rem 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--panel); }
 .archive-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: .6rem; }
 .archive-header h2 { font-size: 1.15rem; }

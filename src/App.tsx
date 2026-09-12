@@ -11,6 +11,7 @@ import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
+import { Subscribe } from './components/Subscribe';
 import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
 /** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
@@ -496,6 +497,7 @@ export default function App() {
           <p>{world.getNarrativeSummary()}</p>
         </div>
       </section>
+      <Subscribe />
       <section className="archive-panel compact-archive">
         <div className="archive-header">
           <h2>Previous collections</h2>

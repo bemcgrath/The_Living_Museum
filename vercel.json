@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/api/cron/weekly-art",
+      "schedule": "0 14 * * 1"
+    }
+  ]
+}

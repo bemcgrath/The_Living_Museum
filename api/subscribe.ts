@@ -1,0 +1,80 @@
+import type { VercelRequest, VercelResponse } from '../lib/server/types';
+import { ART_STYLES, ArtStyle } from '../src/models/Artwork';
+import { findArtistByName } from '../src/data/genreProfiles';
+import { getSupabaseClient } from '../lib/server/supabase';
+import { getStripeClient } from '../lib/server/stripe';
+
+interface SubscribeBody {
+  email?: string;
+  /** An ArtStyle value, 'surprise', or omitted (treated as 'surprise'). */
+  preferredStyle?: string;
+  /** Optional free-text artist search — if it matches, it overrides preferredStyle with that artist's style. */
+  favoriteArtistQuery?: string;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const body = req.body as SubscribeBody;
+  const email = body.email?.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    res.status(400).json({ error: 'A valid email is required.' });
+    return;
+  }
+
+  let preferredStyle: ArtStyle | null = null;
+  let favoriteArtistRealName: string | null = null;
+
+  if (body.favoriteArtistQuery?.trim()) {
+    const match = findArtistByName(body.favoriteArtistQuery);
+    if (match) {
+      preferredStyle = match.style;
+      favoriteArtistRealName = match.profile.realName;
+    }
+    // An unrecognized search term is not an error here — we just fall through to preferredStyle
+    // (or "surprise me"), same graceful behavior as the in-app search (see App.tsx).
+  }
+  if (!preferredStyle && body.preferredStyle && body.preferredStyle !== 'surprise') {
+    if (!ART_STYLES.includes(body.preferredStyle as ArtStyle)) {
+      res.status(400).json({ error: 'Unrecognized style.' });
+      return;
+    }
+    preferredStyle = body.preferredStyle as ArtStyle;
+  }
+
+  try {
+    const supabase = getSupabaseClient();
+    const { data: subscriber, error: upsertError } = await supabase
+      .from('subscribers')
+      .upsert(
+        { email, preferred_style: preferredStyle, favorite_artist_real_name: favoriteArtistRealName, status: 'pending' },
+        { onConflict: 'email' },
+      )
+      .select()
+      .single();
+    if (upsertError || !subscriber) throw upsertError ?? new Error('Failed to create subscriber row.');
+
+    const stripe = getStripeClient();
+    const priceId = process.env.STRIPE_PRICE_ID;
+    if (!priceId) throw new Error('STRIPE_PRICE_ID must be set (see .env.example).');
+    const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer_email: email,
+      line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: { trial_period_days: 7 },
+      success_url: `${siteUrl}/?subscribed=1`,
+      cancel_url: `${siteUrl}/?subscribed=0`,
+      metadata: { subscriberId: subscriber.id },
+    });
+
+    res.status(200).json({ url: session.url });
+  } catch (error) {
+    console.error('subscribe failed', error);
+    res.status(500).json({ error: 'Something went wrong starting your subscription. Please try again.' });
+  }
+}
