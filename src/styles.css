@@ -46,7 +46,21 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .live-indicator { color: var(--muted); font-size: .72rem; letter-spacing: .03em; }
 .live-dot { display: inline-block; width: 7px; height: 7px; margin-right: .35rem; border-radius: 50%; background: var(--lavender); box-shadow: 0 0 0 4px #d5a8ff22; animation: pulse-dot 2.2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px #d5a8ff22; } 50% { box-shadow: 0 0 0 8px #d5a8ff08; } }
-@media (prefers-reduced-motion: reduce) { .live-dot, .art-card, .modal, .modal-backdrop, .stat-card strong { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .live-dot, .art-card, .modal, .modal-backdrop, .gallery-mode-stage, .stat-card strong { animation: none !important; transition: none !important; } }
+
+/* Gallery mode: a full-screen, chrome-free tour through the collection — the "just watch it" view. */
+.gallery-mode-overlay { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(1.25rem, 4vw, 3rem); background: radial-gradient(ellipse at center, #1b1730 0%, #0b0a12 78%); }
+.gallery-mode-exit { position: absolute; top: 1.25rem; right: 1.25rem; }
+.gallery-mode-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; max-width: 26rem; text-align: center; color: var(--muted); }
+.gallery-mode-empty .empty-mark { color: var(--lavender); font-size: 2.2rem; }
+.gallery-mode-empty strong { color: var(--ink); font-size: 1.1rem; }
+.gallery-mode-stage { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; width: 100%; max-width: 640px; border: none; background: none; padding: 0; cursor: pointer; animation: gallery-fade-in .7s ease both; }
+.gallery-mode-art { width: min(70vh, 100%); aspect-ratio: 1; border-radius: 1rem; overflow: hidden; background: #252033; box-shadow: 0 2rem 5rem #000a; }
+.gallery-mode-art svg { display: block; width: 100%; height: 100%; }
+.gallery-mode-caption { text-align: center; max-width: 34rem; }
+.gallery-mode-caption h2 { margin: .3rem 0 .5rem; font-size: 1.4rem; }
+.gallery-mode-caption p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+@keyframes gallery-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .turn-label { margin-left: .7rem; color: var(--subtle); }
 
 .summary-strip { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr); gap: 1rem; margin: 1.25rem 0 1.5rem; align-items: stretch; }

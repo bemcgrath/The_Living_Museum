@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
@@ -61,5 +61,22 @@ describe('museum dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Advance turn' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save collection' }));
     expect(screen.getByText('Collection saved to Previous collections!')).toBeTruthy();
+  });
+
+  it('opens gallery mode and shows a displayed work until exited', () => {
+    render(<App />);
+    for (let i = 0; i < 15; i++) fireEvent.click(screen.getByRole('button', { name: 'Advance turn' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gallery mode' }));
+    expect(screen.getByRole('dialog', { name: 'Gallery mode' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Current gallery mode artwork — click for the next piece' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Exit gallery mode' }));
+    expect(screen.queryByRole('dialog', { name: 'Gallery mode' })).toBeNull();
+  });
+
+  it('shows a waiting state in gallery mode when nothing is displayed yet', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Gallery mode' }));
+    const dialog = screen.getByRole('dialog', { name: 'Gallery mode' });
+    expect(within(dialog).getByText('The first canvas is waiting to be made')).toBeTruthy();
   });
 });

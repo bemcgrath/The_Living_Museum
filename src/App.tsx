@@ -10,6 +10,7 @@ import { Curator } from './simulation/agents/Curator';
 import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
+import { GalleryMode } from './components/GalleryMode';
 
 /** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
 export type StyleFocus = ArtStyle | 'surprise';
@@ -88,6 +89,7 @@ export default function App() {
   const [pendingArchivedSnapshot, setPendingArchivedSnapshot] = useState<string | null>(null);
   const [selectedArchive, setSelectedArchive] = useState<ArchivedCollection | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [galleryMode, setGalleryMode] = useState(false);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
@@ -421,6 +423,7 @@ export default function App() {
             </label>
             <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run using the chosen style">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
+            <button className="button-quiet" onClick={() => setGalleryMode(true)} title="Watch the collection full-screen as an ambient, self-advancing tour">Gallery mode</button>
           </div>
           <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style (or Surprise me) before Start new run to steer what the next collection leans toward. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {notice && <div className="save-notice">{notice}</div>}
@@ -735,6 +738,13 @@ export default function App() {
             <ul className="memory-list">{selectedAgent.memory.observations.slice(-5).reverse().map((memory, index) => <li key={`${memory}-${index}`}>{memory}</li>)}</ul>
           </section>
         </div>
+      )}
+      {galleryMode && (
+        <GalleryMode
+          artworks={world.getArtworks().filter((item) => item.status === 'displayed' || item.status === 'acquired')}
+          agentName={agentName}
+          onExit={() => setGalleryMode(false)}
+        />
       )}
     </main>
   );
