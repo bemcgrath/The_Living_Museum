@@ -11,18 +11,33 @@ import { Collector } from './simulation/agents/Collector';
 import { Historian } from './simulation/agents/Historian';
 import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
+import { GENRE_PROFILES, GenreProfile } from './data/genreProfiles';
 
 /** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
 export type StyleFocus = ArtStyle | 'surprise';
+
+const DEFAULT_ARTIST_PROFILES: GenreProfile[] = [
+  { name: 'Ada', personality: 'Curious and experimental' },
+  { name: 'Milo', personality: 'Disciplined and minimal' },
+  { name: 'Jo', personality: 'Bold and meme-driven' },
+];
 
 function createEngine(seed: number, styleFocus: StyleFocus = 'surprise'): SimulationEngine {
   const world = new WorldState();
   world.seedValue = seed;
   const engine = new SimulationEngine(world);
   const forced = styleFocus === 'surprise' ? undefined : styleFocus;
-  engine.registerAgent(new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced), () => new Artist('artist-1', 'Ada', 'Curious and experimental', seed + 101, forced));
-  engine.registerAgent(new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced), () => new Artist('artist-2', 'Milo', 'Disciplined and minimal', seed + 202, forced));
-  engine.registerAgent(new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced), () => new Artist('artist-3', 'Jo', 'Bold and meme-driven', seed + 303, forced));
+  // Choosing a specific style invites that genre's own themed roster (see genreProfiles.ts) instead
+  // of the generic default trio, so a genre-locked collection reads as a room of kindred artists.
+  const artistProfiles = styleFocus === 'surprise' ? DEFAULT_ARTIST_PROFILES : GENRE_PROFILES[styleFocus];
+  artistProfiles.forEach((profile, index) => {
+    const id = `artist-${index + 1}`;
+    const artistSeed = seed + 101 + index * 101;
+    engine.registerAgent(
+      new Artist(id, profile.name, profile.personality, artistSeed, forced),
+      () => new Artist(id, profile.name, profile.personality, artistSeed, forced),
+    );
+  });
   engine.registerAgent(new RebelArtist('rebel-1', 'Vex', 'Contrarian and unpredictable', seed + 707), () => new RebelArtist('rebel-1', 'Vex', 'Contrarian and unpredictable', seed + 707));
   engine.registerAgent(new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404), () => new Critic('critic-1', 'Rhea', 'Demanding but open-minded', seed + 404));
   engine.registerAgent(new Curator('curator-1', 'Sol', 'Focused on variety and access'), () => new Curator('curator-1', 'Sol', 'Focused on variety and access'));
@@ -334,6 +349,7 @@ export default function App() {
       { name: 'Nova', personality: 'Curious and experimental' },
       { name: 'Wren', personality: 'Wistful and pastoral, in the spirit of Andrew Wyeth' },
       { name: 'Vincent', personality: 'Painterly and post-impressionist' },
+      { name: 'Oscar', personality: 'Luminous and impressionist, in the spirit of Monet' },
       { name: 'Dorothea', personality: 'Patient and monochrome, in the spirit of Ansel Adams photography' },
     ];
     const profile = inviteRng.choice(profiles);
@@ -413,7 +429,7 @@ export default function App() {
                 aria-label="Style for the next new collection"
                 value={styleFocus}
                 onChange={(event) => setStyleFocus(event.target.value as StyleFocus)}
-                title="Choose a style to focus the next new collection on, or let it surprise you with a natural mix"
+                title="Choose a style to invite that genre's own themed roster of artists for the next new collection, or let it surprise you with a natural mix"
               >
                 <option value="surprise">Surprise me (all styles)</option>
                 {ART_STYLES.map((style) => (
@@ -425,7 +441,7 @@ export default function App() {
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
             <button className="button-quiet" onClick={() => setGalleryMode(true)} title="Watch the collection full-screen as an ambient, self-advancing tour">Gallery mode</button>
           </div>
-          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style (or Surprise me) before Start new run to steer what the next collection leans toward. Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
+          <p className="controls-help">Create a collection to watch it evolve automatically, or use Advance turn for one step at a time. Pick a style before Start new run to invite that genre's own artists (or leave it on Surprise me for a natural mix). Save collection archives your progress; Start new run archives it and begins again with a fresh seed.</p>
           {notice && <div className="save-notice">{notice}</div>}
         </div>
       </header>

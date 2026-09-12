@@ -24,7 +24,9 @@ const STYLE_PROFILES: Record<ArtStyle, StyleProfile> = {
   expressionist: { backgrounds: ['#241313', '#2b1710', '#1f1420', '#26160e'], palette: ['#ff7b00', '#e85d75', '#f4b942', '#8338ec', '#ff477e', '#ffb703'], count: 5 },
   abstract: { backgrounds: ['#141420', '#1a1526', '#101018', '#171a2b'], palette: ['#f4b942', '#e85d75', '#3a86ff', '#8338ec', '#2ec4b6', '#ff9770'], count: 6 },
   cubist: { backgrounds: ['#20201b', '#241f16', '#1c211b', '#231c1a'], palette: ['#bc6c25', '#dda15e', '#283618', '#fefae0', '#606c38', '#a68a64'], count: 6 },
-  impressionist: { backgrounds: ['#20344a', '#26374d', '#1c2c40', '#2a3f4d'], palette: ['#90e0ef', '#caf0f8', '#ffd166', '#f28482', '#a8dadc', '#c9ada7'], count: 10 },
+  // Monet-inspired — rendered by a dedicated scene generator below (soft sunlit garden/pond tones,
+  // deliberately lighter than post_impressionist's night palette so the two read as distinct).
+  impressionist: { backgrounds: ['#aac9d6', '#c7dbc3', '#d7c6dd', '#bcd4c8'], palette: ['#e8b4c8', '#c9b8d8', '#f4d9a0', '#8bab7a', '#a8c8d8', '#f5ecd9'], count: 0 },
   bauhaus: { backgrounds: ['#f6efe2', '#f2e9d8', '#efe4cf', '#f5e6d3'], palette: ['#d62828', '#003049', '#fcbf49', '#111111', '#606c38'], count: 5 },
   collage: { backgrounds: ['#2a241d', '#241f2a', '#1f231d', '#2a1f28'], palette: ['#f4b942', '#e85d75', '#3a86ff', '#f8f4ff', '#8338ec', '#4ecdc4'], count: 6 },
   meme: { backgrounds: ['#fff6d6', '#ffe8d6', '#e6f2ff', '#f0e6ff'], palette: ['#111111', '#ff4d6d', '#3a86ff', '#f4b942', '#06d6a0'], count: 4 },
@@ -45,12 +47,14 @@ export class ArtGenerator {
   generateArt(style: ArtStyle, motif?: string, caption?: string, inspiration?: string, memeVariant?: MemeVariant, composition?: string): string {
     const profile = STYLE_PROFILES[style];
     const signature = motif ? this.generateMotif(motif, profile.palette[0], style, composition) : '';
-    if (style === 'pastoral' || style === 'post_impressionist' || style === 'silver_gelatin') {
+    if (style === 'pastoral' || style === 'post_impressionist' || style === 'silver_gelatin' || style === 'impressionist') {
       const scene = style === 'pastoral'
         ? this.generatePastoralScene(profile, composition)
         : style === 'post_impressionist'
           ? this.generatePostImpressionistScene(profile, composition)
-          : this.generateSilverGelatinScene(profile, composition);
+          : style === 'silver_gelatin'
+            ? this.generateSilverGelatinScene(profile, composition)
+            : this.generateImpressionistScene(profile, composition);
       return `<svg viewBox="0 0 100 100" role="img" aria-label="${style} procedural artwork" data-motif="${motif ?? ''}" data-caption="${caption ?? ''}" data-inspiration="${inspiration ?? ''}" data-meme-variant="${memeVariant ?? ''}" data-composition="${composition ?? ''}" xmlns="http://www.w3.org/2000/svg">${scene}${signature}</svg>`;
     }
     // Vary background + layout per artwork so pieces sharing a style aren't near-duplicates.
@@ -214,6 +218,59 @@ export class ArtGenerator {
     return `${skyRect}${cloudBand}${peaks}${snowCaps}${foreground}${foregroundTexture}${vignette}`;
   }
 
+  /**
+   * Monet-inspired impressionist scene: a sunlit garden pond built from dozens of soft, blurred
+   * color dabs (broken brushwork) rather than hard-edged shapes, with floating lily pads and
+   * trailing willow branches. Never reproduces a specific painting; composes its own pond scene
+   * from randomized soft-focus elements.
+   */
+  private generateImpressionistScene(profile: StyleProfile, composition?: string): string {
+    const sky = this.rng.choice(profile.backgrounds);
+    const horizonY = this.rng.randomInt(38, 55);
+    const skyRect = `<rect x="0" y="0" width="100" height="100" fill="${sky}"/>`;
+
+    const dabCount = this.rng.randomInt(40, 60);
+    const dabs = Array.from({ length: dabCount }, () => {
+      const cx = this.rng.randomInt(0, 100);
+      const cy = this.rng.randomInt(0, 100);
+      const r = this.rng.randomFloat(1.2, 3.2);
+      const color = this.rng.choice(profile.palette);
+      const opacity = this.rng.randomFloat(0.35, 0.8);
+      return `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${color}" opacity="${opacity.toFixed(2)}"/>`;
+    }).join('');
+    // A shared blur filter is what turns scattered dabs into something that reads as impressionist
+    // brushwork rather than confetti — the defining visual difference from every other style here.
+    const blurId = `monet-blur-${this.rng.randomInt(0, 999999)}`;
+    const dabLayer = `<defs><filter id="${blurId}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.9"/></filter></defs><g filter="url(#${blurId})">${dabs}</g>`;
+
+    const padXs = this.impressionistLayout(composition);
+    const lilyPads = padXs.map((x) => {
+      const y = this.rng.randomInt(horizonY + 6, 92);
+      const padColor = this.rng.choice(profile.palette.filter((color) => color !== sky));
+      const flowerColor = this.rng.choice(['#ffe8f0', '#fff1c9', '#ffffff']);
+      return `<g><ellipse cx="${x}" cy="${y}" rx="${this.rng.randomInt(4, 7)}" ry="${this.rng.randomInt(2, 3)}" fill="${padColor}" opacity=".75"/><circle cx="${x}" cy="${y - 1}" r="1.1" fill="${flowerColor}" opacity=".85"/></g>`;
+    }).join('');
+
+    const willows = Array.from({ length: this.rng.randomInt(3, 5) }, () => {
+      const x = this.rng.randomInt(5, 95);
+      const sway = this.rng.randomInt(-6, 6);
+      const color = this.rng.choice(profile.palette);
+      return `<path d="M ${x} 0 Q ${x + sway} ${horizonY / 2} ${x} ${horizonY}" stroke="${color}" stroke-width=".6" fill="none" opacity=".5"/>`;
+    }).join('');
+
+    return `${skyRect}${dabLayer}<g>${willows}</g><g>${lilyPads}</g>`;
+  }
+
+  private impressionistLayout(composition?: string): number[] {
+    if (composition === 'diagonal') return [15, 35, 55, 75, 90];
+    if (composition === 'vertical') return [45, 50, 55, 48, 52];
+    if (composition === 'clustered') {
+      const center = this.rng.randomInt(35, 65);
+      return [center - 12, center - 4, center + 4, center + 12];
+    }
+    return Array.from({ length: this.rng.randomInt(4, 7) }, () => this.rng.randomInt(10, 90));
+  }
+
   /** Positions elements according to one of a few composition strategies chosen per artwork. */
   private pickPosition(layout: Layout, index: number, count: number, clusterCenter: { x: number; y: number }): { x: number; y: number } {
     switch (layout) {
@@ -301,8 +358,6 @@ export class ArtGenerator {
         return `<g transform="rotate(${index * 31} ${x} ${y})"><polygon points="${x},${y - size} ${x + radius},${y} ${x},${y + radius} ${x - radius},${y}" fill="${color}" opacity=".75"/><circle cx="${x}" cy="${y}" r="${Math.max(2, Math.ceil(radius / 3))}" fill="#f8f4ff"/></g>`;
       case 'cubist':
         return `<polygon points="${x},${y} ${x + size},${y - radius} ${x + size - radius},${y + size} ${x - radius},${y + radius}" fill="${color}" opacity=".78"/><line x1="${x}" y1="${y}" x2="${x + size - radius}" y2="${y + size}" stroke="#fefae0"/>`;
-      case 'impressionist':
-        return `<g fill="${color}" opacity="${opacity}">${Array.from({ length: this.rng.randomInt(4, 10) }, () => `<circle cx="${x + this.rng.randomInt(-4, 12)}" cy="${y + this.rng.randomInt(-4, 12)}" r="${Math.max(1, this.rng.randomInt(1, 4))}"/>`).join('')}</g>`;
       case 'bauhaus':
         return index % 2 === 0
           ? `<circle cx="${x}" cy="${y}" r="${radius}" fill="${color}"/><rect x="${x - radius}" y="${y}" width="${size}" height="2" fill="#f6efe2"/>`
@@ -316,6 +371,7 @@ export class ArtGenerator {
       case 'pastoral':
       case 'post_impressionist':
       case 'silver_gelatin':
+      case 'impressionist':
         return '';
     }
   }

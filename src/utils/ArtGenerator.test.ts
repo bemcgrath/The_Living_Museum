@@ -4,7 +4,9 @@ import { ArtGenerator } from './ArtGenerator';
 
 describe('ArtGenerator', () => {
   it('generates a distinct SVG vocabulary for every art style', () => {
-    const styles: ArtStyle[] = ['geometric', 'surreal', 'minimal', 'organic', 'chaotic', 'digital', 'expressionist', 'abstract', 'cubist', 'impressionist', 'bauhaus', 'collage', 'meme'];
+    // impressionist is exercised separately below — it's a scene-based style like pastoral/
+    // post_impressionist/silver_gelatin, not part of the generic per-element loop these cover.
+    const styles: ArtStyle[] = ['geometric', 'surreal', 'minimal', 'organic', 'chaotic', 'digital', 'expressionist', 'abstract', 'cubist', 'bauhaus', 'collage', 'meme'];
     const art = styles.map((style) => new ArtGenerator(42).generateArt(style));
     expect(new Set(art).size).toBe(styles.length);
     expect(art[0]).toContain('<rect');
@@ -16,10 +18,9 @@ describe('ArtGenerator', () => {
     expect(art[6]).toContain('C');
     expect(art[7]).toContain('<polygon');
     expect(art[8]).toContain('<polygon');
-    expect(art[9]).toContain('<g');
-    expect(art[10]).toContain('<circle');
-    expect(art[11]).toContain('<path');
-    expect(art[12]).toContain('<text');
+    expect(art[9]).toContain('<circle');
+    expect(art[10]).toContain('<path');
+    expect(art[11]).toContain('<text');
   });
 
   it('is deterministic for a style and seed', () => {
@@ -71,26 +72,36 @@ describe('ArtGenerator', () => {
     expect(vertical).toContain('M 50 12 V 88');
   });
 
-  it('renders distinct scene-based styles for pastoral, post-impressionist, and silver gelatin', () => {
+  it('renders distinct scene-based styles for pastoral, post-impressionist, silver gelatin, and impressionist', () => {
     const pastoral = new ArtGenerator(7).generateArt('pastoral');
     const postImpressionist = new ArtGenerator(7).generateArt('post_impressionist');
     const silverGelatin = new ArtGenerator(7).generateArt('silver_gelatin');
-    expect(new Set([pastoral, postImpressionist, silverGelatin]).size).toBe(3);
+    const impressionist = new ArtGenerator(7).generateArt('impressionist');
+    expect(new Set([pastoral, postImpressionist, silverGelatin, impressionist]).size).toBe(4);
     expect(pastoral).toContain('aria-label="pastoral procedural artwork"');
     expect(postImpressionist).toContain('aria-label="post_impressionist procedural artwork"');
     expect(silverGelatin).toContain('aria-label="silver_gelatin procedural artwork"');
+    expect(impressionist).toContain('aria-label="impressionist procedural artwork"');
   });
 
   it('is deterministic per seed for each new scene style', () => {
     expect(new ArtGenerator(55).generateArt('pastoral')).toBe(new ArtGenerator(55).generateArt('pastoral'));
     expect(new ArtGenerator(55).generateArt('post_impressionist')).toBe(new ArtGenerator(55).generateArt('post_impressionist'));
     expect(new ArtGenerator(55).generateArt('silver_gelatin')).toBe(new ArtGenerator(55).generateArt('silver_gelatin'));
+    expect(new ArtGenerator(55).generateArt('impressionist')).toBe(new ArtGenerator(55).generateArt('impressionist'));
   });
 
   it('produces varied scenes across seeds for the new painterly/photo styles', () => {
     expect(new ArtGenerator(1).generateArt('pastoral')).not.toBe(new ArtGenerator(2).generateArt('pastoral'));
     expect(new ArtGenerator(1).generateArt('post_impressionist')).not.toBe(new ArtGenerator(2).generateArt('post_impressionist'));
     expect(new ArtGenerator(1).generateArt('silver_gelatin')).not.toBe(new ArtGenerator(2).generateArt('silver_gelatin'));
+    expect(new ArtGenerator(1).generateArt('impressionist')).not.toBe(new ArtGenerator(2).generateArt('impressionist'));
+  });
+
+  it('gives Monet-inspired impressionist scenes soft blurred brushwork rather than hard-edged shapes', () => {
+    const svg = new ArtGenerator(3).generateArt('impressionist');
+    expect(svg).toContain('feGaussianBlur');
+    expect((svg.match(/<circle/g) ?? []).length).toBeGreaterThan(20);
   });
 
   it('keeps silver gelatin photography strictly grayscale', () => {

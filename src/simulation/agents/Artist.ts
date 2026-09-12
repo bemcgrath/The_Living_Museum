@@ -66,6 +66,12 @@ export class Artist extends BaseAgent {
       this.primaryStyle = 'post_impressionist';
       this.secondaryStyles = ['impressionist', 'pastoral', 'expressionist'];
       this.experimentationRate = 0.4;
+    } else if (personalityLower.includes('monet') || personalityLower.includes('impressionist') || personalityLower.includes('water lily') || personalityLower.includes('water lilies')) {
+      // Checked after the post-impressionist branch above, since "post-impressionist" also contains
+      // the substring "impressionist" and should keep routing to Van Gogh, not here.
+      this.primaryStyle = 'impressionist';
+      this.secondaryStyles = ['post_impressionist', 'pastoral', 'organic'];
+      this.experimentationRate = 0.3;
     } else if (personalityLower.includes('photograph') || personalityLower.includes('ansel') || personalityLower.includes('monochrome')) {
       this.primaryStyle = 'silver_gelatin';
       this.secondaryStyles = ['pastoral', 'minimal', 'geometric'];

@@ -35,7 +35,7 @@ describe('museum dashboard', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Invite artist' }));
     expect(screen.getAllByText(/joined the museum as a/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Lumen 1 ·|Kite 1 ·|Mara 1 ·|Solace 1 ·|Venn 1 ·|Nova 1 ·|Wren 1 ·|Vincent 1 ·|Dorothea 1 ·/)).toBeTruthy();
+    expect(screen.getByText(/Lumen 1 ·|Kite 1 ·|Mara 1 ·|Solace 1 ·|Venn 1 ·|Nova 1 ·|Wren 1 ·|Vincent 1 ·|Oscar 1 ·|Dorothea 1 ·/)).toBeTruthy();
   });
 
   it('archives the current collection when starting a new one and can browse it', () => {
@@ -71,6 +71,24 @@ describe('museum dashboard', () => {
     expect(screen.getByRole('button', { name: 'Current gallery mode artwork — click for the next piece' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Exit gallery mode' }));
     expect(screen.queryByRole('dialog', { name: 'Gallery mode' })).toBeNull();
+  });
+
+  it('invites a themed artist roster when a specific style is chosen for a new collection', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Style for the next new collection'), { target: { value: 'impressionist' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
+    expect(screen.getByText(/Oscar ·/)).toBeTruthy();
+    expect(screen.getByText(/Pierre ·/)).toBeTruthy();
+    expect(screen.getByText(/Edgar ·/)).toBeTruthy();
+    expect(screen.queryByText(/Ada ·/)).toBeNull();
+  });
+
+  it('keeps the default varied roster when no style is chosen', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start new run' }));
+    expect(screen.getByText(/Ada ·/)).toBeTruthy();
+    expect(screen.getByText(/Milo ·/)).toBeTruthy();
+    expect(screen.getByText(/Jo ·/)).toBeTruthy();
   });
 
   it('shows a waiting state in gallery mode when nothing is displayed yet', () => {

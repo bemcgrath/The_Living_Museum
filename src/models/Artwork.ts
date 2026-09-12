@@ -34,6 +34,7 @@ export const ART_STYLES: ArtStyle[] = [
 ];
 
 const STYLE_LABEL_OVERRIDES: Partial<Record<ArtStyle, string>> = {
+  impressionist: 'Impressionist (Monet-inspired)',
   post_impressionist: 'Post-Impressionist',
   pastoral: 'Pastoral (Wyeth-inspired)',
   silver_gelatin: 'Silver Gelatin (Ansel Adams-inspired)',
