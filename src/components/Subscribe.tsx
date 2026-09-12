@@ -1,13 +1,17 @@
 /**
- * The community subscribe form: $1/month, 7-day free trial, one AI-generated piece a week in the
- * subscriber's chosen genre (or "surprise me"). Posts to api/subscribe.ts, which creates the
- * Supabase subscriber row and a Stripe Checkout session, then redirects to Stripe to collect
- * payment. See lib/server/prompt.ts for how the weekly piece is actually chosen and generated.
+ * The community subscribe form: free while we're building the list (no card, no Stripe involved —
+ * see api/subscribe.ts's SUBSCRIPTION_REQUIRES_PAYMENT toggle), one AI-generated piece a week in the
+ * subscriber's chosen genre (or "surprise me"). See lib/server/prompt.ts for how the weekly piece is
+ * actually chosen and generated.
+ *
+ * NOTE: this copy is hardcoded for the free mode currently set in .env.example/SETUP.md. If
+ * SUBSCRIPTION_REQUIRES_PAYMENT is flipped back to true, update this copy (and the response handling
+ * below, which currently expects either {success:true} (free) or {url} (paid, redirects to Stripe)).
  */
 import { FormEvent, useState } from 'react';
 import { ART_STYLES, ArtStyle, styleLabel } from '../models/Artwork';
 
-type Status = 'idle' | 'submitting' | 'error';
+type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 export function Subscribe() {
   const [email, setEmail] = useState('');
@@ -28,13 +32,31 @@ export function Subscribe() {
       });
       // A non-JSON body (e.g. an HTML error page from a misconfigured/undeployed backend) shouldn't
       // surface a raw parser error to the user — fall back to a friendly generic message instead.
-      const data = await response.json().catch(() => null) as { url?: string; error?: string } | null;
-      if (!response.ok || !data?.url) throw new Error(data?.error ?? 'Something went wrong starting your trial. Please try again.');
-      window.location.href = data.url; // Off to Stripe Checkout.
+      const data = await response.json().catch(() => null) as { url?: string; success?: boolean; error?: string } | null;
+      if (!response.ok || !(data?.url || data?.success)) {
+        throw new Error(data?.error ?? 'Something went wrong signing you up. Please try again.');
+      }
+      if (data.url) {
+        window.location.href = data.url; // Paid mode only — off to Stripe Checkout.
+        return;
+      }
+      setStatus('success');
     } catch (submitError) {
       setStatus('error');
       setError(submitError instanceof Error ? submitError.message : 'Something went wrong.');
     }
+  }
+
+  if (status === 'success') {
+    return (
+      <section className="subscribe-panel">
+        <div className="subscribe-header">
+          <p className="eyebrow">Join the community</p>
+          <h2>You're in!</h2>
+          <p className="section-help">Check your inbox for your first piece — it's on its way.</p>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -43,8 +65,8 @@ export function Subscribe() {
         <p className="eyebrow">Join the community</p>
         <h2>A weekly piece, delivered</h2>
         <p className="section-help">
-          $1/month after a 7-day free trial. Pick a genre for your weekly AI-generated piece (or search for a
-          favorite artist), or leave it on Surprise me for a natural mix. Cancel anytime.
+          Free while we're testing — no card required. Pick a genre for your weekly AI-generated piece (or
+          search for a favorite artist), or leave it on Surprise me for a natural mix.
         </p>
       </div>
       <form className="subscribe-form" onSubmit={handleSubmit}>
@@ -82,7 +104,7 @@ export function Subscribe() {
           />
         </label>
         <button className="button-primary" type="submit" disabled={status === 'submitting'}>
-          {status === 'submitting' ? 'Starting your trial…' : 'Start free trial — $1/mo after'}
+          {status === 'submitting' ? 'Joining…' : 'Join for free'}
         </button>
       </form>
       {error && <p className="subscribe-error" role="alert">{error}</p>}

@@ -1,8 +1,16 @@
 import type { VercelRequest, VercelResponse } from '../lib/server/types';
 import { ART_STYLES, ArtStyle } from '../src/models/Artwork';
 import { findArtistByName } from '../src/data/genreProfiles';
-import { getSupabaseClient } from '../lib/server/supabase';
+import { getSupabaseClient, Subscriber } from '../lib/server/supabase';
 import { getStripeClient } from '../lib/server/stripe';
+import { deliverArtworkEmail } from '../lib/server/deliverArtwork';
+
+// Defaults to requiring payment — an unset/misconfigured env var should never accidentally grant
+// free access. Set SUBSCRIPTION_REQUIRES_PAYMENT=false to accept email-only signups instead (see
+// .env.example for why you'd do that, and the note about keeping Subscribe.tsx's copy in sync).
+function subscriptionRequiresPayment(): boolean {
+  return process.env.SUBSCRIPTION_REQUIRES_PAYMENT !== 'false';
+}
 
 interface SubscribeBody {
   email?: string;
@@ -47,15 +55,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   try {
     const supabase = getSupabaseClient();
+    const requiresPayment = subscriptionRequiresPayment();
+
     const { data: subscriber, error: upsertError } = await supabase
       .from('subscribers')
       .upsert(
-        { email, preferred_style: preferredStyle, favorite_artist_real_name: favoriteArtistRealName, status: 'pending' },
+        {
+          email,
+          preferred_style: preferredStyle,
+          favorite_artist_real_name: favoriteArtistRealName,
+          // Free mode has no Stripe checkout/webhook to flip this to 'trialing' later, so it must
+          // start 'active' — that's also the status the weekly cron and subscriber-status checks key on.
+          status: requiresPayment ? 'pending' : 'active',
+        },
         { onConflict: 'email' },
       )
       .select()
       .single();
     if (upsertError || !subscriber) throw upsertError ?? new Error('Failed to create subscriber row.');
+
+    if (!requiresPayment) {
+      // Best-effort, same reasoning as the paid path's webhook-triggered welcome piece (see
+      // api/webhooks/stripe.ts): nobody should sign up and wait up to a week to see anything, and a
+      // transient image-gen/email hiccup shouldn't turn a successful signup into an error response.
+      try {
+        await deliverArtworkEmail(subscriber as Subscriber, 'welcome');
+      } catch (welcomeError) {
+        console.error(`Welcome piece failed for subscriber ${subscriber.id}`, welcomeError);
+      }
+      res.status(200).json({ success: true });
+      return;
+    }
 
     const stripe = getStripeClient();
     const priceId = process.env.STRIPE_PRICE_ID;
