@@ -60,7 +60,7 @@ export function Subscribe() {
   }
 
   return (
-    <section className="subscribe-panel">
+    <section className="subscribe-panel" id="community">
       <div className="subscribe-header">
         <p className="eyebrow">Join the community</p>
         <h2>A weekly piece, delivered</h2>

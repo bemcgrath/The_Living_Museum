@@ -228,6 +228,18 @@ export default function App() {
     setTimeout(() => setNotice(null), 5500);
   }
 
+  // Explicit scrollIntoView rather than relying on native <a href="#id"> fragment navigation, which
+  // proved unreliable here (browser-native scroll-to-fragment sometimes silently did nothing, likely
+  // an interaction with the page's own scroll-behavior/height — scrollIntoView is deterministic).
+  // scroll-margin-top on the target elements (see styles.css) still applies, offsetting for the
+  // sticky nav so the jumped-to heading isn't hidden underneath it.
+  function jumpToSection(id: string) {
+    return (event: React.MouseEvent<HTMLAnchorElement>): void => {
+      event.preventDefault();
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  }
+
   const displayedCount = artworks.filter((artwork) => artwork.status === 'displayed').length;
   const acquiredCount = artworks.filter((artwork) => artwork.status === 'acquired').length;
   const agentName = (id: string): string => world.getAgent(id)?.name ?? id;
@@ -440,7 +452,11 @@ export default function App() {
           <div>
             <p className="eyebrow">A procedural culture simulator</p>
             <h1>The Living Museum</h1>
-            <p className="hero-copy">A seeded art world that finds its own taste.</p>
+            <p className="hero-copy">
+              Autonomous AI agents — artists, critics, curators, collectors, and a historian — create,
+              judge, and collect art in real time, with no script. Watch a culture emerge, or start
+              your own collection below.
+            </p>
           </div>
         </div>
         <div className="hero-actions">
@@ -486,6 +502,15 @@ export default function App() {
           {notice && <div className="save-notice">{notice}</div>}
         </div>
       </header>
+      <nav className="section-nav" aria-label="Jump to section">
+        <a href="#collection" onClick={jumpToSection('collection')}>Collection</a>
+        <a href="#agents" onClick={jumpToSection('agents')}>Agents</a>
+        <a href="#movements" onClick={jumpToSection('movements')}>Movements</a>
+        <a href="#exhibitions" onClick={jumpToSection('exhibitions')}>Exhibitions</a>
+        <a href="#events" onClick={jumpToSection('events')}>Events</a>
+        <a href="#history" onClick={jumpToSection('history')}>History</a>
+        <a href="#community" className="section-nav-highlight" onClick={jumpToSection('community')}>Join the community</a>
+      </nav>
       <section className="summary-strip">
         <div className="stats-grid">
           <div className="stat-card stat-accent"><span className="stat-label">turn</span><strong key={stats.currentTurn} className="stat-pop">{stats.currentTurn}</strong><small>unfolding history</small></div>
@@ -524,7 +549,7 @@ export default function App() {
       </section>
 
       <div className="content-grid">
-        <section className="collection-section" ref={galleryRef}>
+        <section className="collection-section" id="collection" ref={galleryRef}>
           <div className="section-heading">
             <div><p className="eyebrow">The public galleries</p><h2>Collection</h2><p className="section-help">Every work is a trace of the culture forming around it. Select a piece to inspect its provenance.</p></div>
             <div className="filter-row">
@@ -586,7 +611,7 @@ export default function App() {
               <small>{acquiredCount} works acquired</small>
             </article>
           </div>
-          <h2>Agents</h2>
+          <h2 id="agents">Agents</h2>
           <p className="section-help">Artists can be invited to bring new styles and ideas into the museum.</p>
           {networkEdges.length > 0 && (
             <div className="network-graph">
@@ -624,7 +649,7 @@ export default function App() {
               </li>
             ))}
           </ul>
-          <h2>Movements</h2>
+          <h2 id="movements">Movements</h2>
           <p className="section-help">Select a movement to see the works that define it.</p>
           <ul className="movement-list movement-grid">
             {world.getMovements().length === 0 && <li className="empty">Movements emerge after repeated styles gain attention.</li>}
@@ -636,7 +661,7 @@ export default function App() {
               </li>
             ))}
           </ul>
-          <h2>Exhibitions</h2>
+          <h2 id="exhibitions">Exhibitions</h2>
           <ul className="movement-list movement-grid">
             {world.getExhibitions().length === 0 && <li className="empty">The curator is assembling the first exhibition.</li>}
             {world.getExhibitions().slice().reverse().slice(0, 3).map((exhibition) => (
@@ -645,7 +670,7 @@ export default function App() {
               </li>
             ))}
           </ul>
-          <h2>Recent events</h2>
+          <h2 id="events">Recent events</h2>
           <div className="event-filters">
             <select aria-label="Filter events by agent" value={eventAgentFilter} onChange={(event) => setEventAgentFilter(event.target.value)}>
               <option value="all">All agents</option>
@@ -662,7 +687,7 @@ export default function App() {
             ))}
             {events.length === 0 && <li className="empty">No events match these filters.</li>}
           </ol>
-          <h2>Museum history</h2>
+          <h2 id="history">Museum history</h2>
           <ol className="events history-events">
             {world.getHistoricalEvents().slice(-8).reverse().map((event, index) => (
               <li key={`${event.turn}-${event.eventType}-${index}`}><strong>T{event.turn}</strong> {event.description}</li>
