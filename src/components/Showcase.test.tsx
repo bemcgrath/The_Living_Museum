@@ -133,4 +133,32 @@ describe('Showcase', () => {
     await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
     expect(screen.queryByText('Browse all collections')).toBeNull();
   });
+
+  it('shows "Meet the Museum\'s Artists" only when onMeetArtists is provided, and calls it when clicked', async () => {
+    stubFetch(SAMPLE_COLLECTION);
+    const onMeetArtists = vi.fn();
+    render(<Showcase onMeetArtists={onMeetArtists} />);
+    await waitFor(() => expect(screen.getByText("Meet the Museum's Artists")).toBeTruthy());
+    fireEvent.click(screen.getByText("Meet the Museum's Artists"));
+    expect(onMeetArtists).toHaveBeenCalledOnce();
+    cleanup();
+
+    stubFetch(SAMPLE_COLLECTION);
+    render(<Showcase />);
+    await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
+    expect(screen.queryByText("Meet the Museum's Artists")).toBeNull();
+  });
+
+  it('invites the piece\'s artist into the visitor\'s own collection and closes the lightbox', async () => {
+    stubFetch(SAMPLE_COLLECTION);
+    const onInviteArtist = vi.fn();
+    render(<Showcase onInviteArtist={onInviteArtist} />);
+    await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('a sunlit landscape with rolling hills').closest('figure')!);
+    fireEvent.click(screen.getByText('Invite Oscar to your collection'));
+
+    expect(onInviteArtist).toHaveBeenCalledWith('impressionist', 'Oscar');
+    expect(screen.queryByText('Part of The Impressionist Room')).toBeNull(); // lightbox closed itself
+  });
 });

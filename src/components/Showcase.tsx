@@ -45,7 +45,17 @@ function ShowcaseSkeleton() {
   );
 }
 
-export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
+export function Showcase({
+  onBrowseAll,
+  onMeetArtists,
+  onInviteArtist,
+}: {
+  onBrowseAll?: () => void;
+  onMeetArtists?: () => void;
+  /** Called with (style, artistName) when a visitor invites a showcase piece's persona into their
+   *  own collection — see App.tsx's inviteArtistFromShowcase. */
+  onInviteArtist?: (style: string, artistName: string) => void;
+}) {
   const [collections, setCollections] = useState<ShowcaseCollectionView[]>([]);
   const [state, setState] = useState<LoadState>('loading');
   const [selected, setSelected] = useState<{ piece: ShowcasePieceView; collectionName: string } | null>(null);
@@ -85,11 +95,18 @@ export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
           Actual AI-generated art from the weekly email pipeline — not the in-app procedural simulation above.
           This is what a subscriber's weekly piece looks like.
         </p>
-        {onBrowseAll && (
-          <button className="button-quiet" onClick={onBrowseAll} title="Browse every showcase collection ever generated, not just what's featured here">
-            Browse all collections
-          </button>
-        )}
+        <div className="showcase-header-actions">
+          {onBrowseAll && (
+            <button className="button-quiet" onClick={onBrowseAll} title="Browse every showcase collection ever generated, not just what's featured here">
+              Browse all collections
+            </button>
+          )}
+          {onMeetArtists && (
+            <button className="button-quiet" onClick={onMeetArtists} title="See the museum's full roster of artists across every style">
+              Meet the Museum's Artists
+            </button>
+          )}
+        </div>
       </div>
       {visible.map((collection) => (
         <div key={collection.id} className="showcase-collection">
@@ -118,6 +135,14 @@ export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
         piece={selected?.piece ?? null}
         collectionName={selected?.collectionName ?? ''}
         onClose={() => setSelected(null)}
+        onInvite={
+          selected && onInviteArtist
+            ? () => {
+                onInviteArtist(selected.piece.style, selected.piece.artist_name ?? '');
+                setSelected(null);
+              }
+            : undefined
+        }
       />
     </section>
   );

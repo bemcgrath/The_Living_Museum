@@ -38,7 +38,18 @@ function CollectionsSkeleton() {
   );
 }
 
-export function AllShowcaseCollections({ onExit }: { onExit: () => void }) {
+export function AllShowcaseCollections({
+  onExit,
+  onMeetArtists,
+  onInviteArtist,
+}: {
+  onExit: () => void;
+  onMeetArtists?: () => void;
+  /** Called with (style, artistName) when a visitor invites a piece's persona into their own
+   *  collection — see App.tsx's inviteArtistFromShowcase. This overlay closes itself afterward so
+   *  the visitor lands back on the toolbar to act on it. */
+  onInviteArtist?: (style: string, artistName: string) => void;
+}) {
   const [collections, setCollections] = useState<ShowcaseCollectionView[]>([]);
   const [state, setState] = useState<LoadState>('loading');
   const [selected, setSelected] = useState<{ piece: ShowcasePieceView; collectionName: string } | null>(null);
@@ -80,6 +91,11 @@ export function AllShowcaseCollections({ onExit }: { onExit: () => void }) {
       <div className="community-gallery-header">
         <p className="eyebrow">Every generated collection</p>
         <h2>Browse all collections</h2>
+        {onMeetArtists && (
+          <button className="button-quiet" onClick={onMeetArtists} title="See the museum's full roster of artists across every style">
+            Meet the Museum's Artists
+          </button>
+        )}
       </div>
       {state === 'loading' && <CollectionsSkeleton />}
       {state === 'error' && <p className="community-gallery-status">Couldn't load the collections right now.</p>}
@@ -113,6 +129,15 @@ export function AllShowcaseCollections({ onExit }: { onExit: () => void }) {
         piece={selected?.piece ?? null}
         collectionName={selected?.collectionName ?? ''}
         onClose={() => setSelected(null)}
+        onInvite={
+          selected && onInviteArtist
+            ? () => {
+                onInviteArtist(selected.piece.style, selected.piece.artist_name ?? '');
+                setSelected(null);
+                onExit(); // hand the visitor back to the toolbar to act on the primed selection
+              }
+            : undefined
+        }
       />
     </div>
   );

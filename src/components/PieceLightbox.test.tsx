@@ -41,4 +41,22 @@ describe('PieceLightbox', () => {
     fireEvent.click(screen.getByRole('dialog').parentElement!);
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it('shows an invite button only when both artist_name and onInvite are present, and calls onInvite when clicked', () => {
+    const onInvite = vi.fn();
+    render(<PieceLightbox piece={PIECE} collectionName="The Impressionist Room" onClose={vi.fn()} onInvite={onInvite} />);
+    const button = screen.getByText('Invite Oscar to your collection');
+    fireEvent.click(button);
+    expect(onInvite).toHaveBeenCalledOnce();
+  });
+
+  it('omits the invite button when onInvite is not provided', () => {
+    render(<PieceLightbox piece={PIECE} collectionName="The Impressionist Room" onClose={vi.fn()} />);
+    expect(screen.queryByText(/^Invite /)).toBeNull();
+  });
+
+  it('omits the invite button when there is no artist_name, even if onInvite is provided', () => {
+    render(<PieceLightbox piece={{ ...PIECE, artist_name: null }} collectionName="The Impressionist Room" onClose={vi.fn()} onInvite={vi.fn()} />);
+    expect(screen.queryByText(/^Invite /)).toBeNull();
+  });
 });

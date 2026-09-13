@@ -20,10 +20,14 @@ export function PieceLightbox({
   piece,
   collectionName,
   onClose,
+  onInvite,
 }: {
   piece: LightboxPiece | null;
   collectionName: string;
   onClose: () => void;
+  /** Present only when the piece has a public persona and the caller wants an "invite them into your
+   *  own collection" action shown — see App.tsx's inviteArtistFromShowcase. */
+  onInvite?: () => void;
 }) {
   useEffect(() => {
     if (!piece) return;
@@ -55,6 +59,11 @@ export function PieceLightbox({
         <p>{piece.subject}</p>
         {piece.artist_name && <p className="showcase-lightbox-artist">by {piece.artist_name}</p>}
         <p className="section-help">Part of {collectionName}</p>
+        {piece.artist_name && onInvite && (
+          <button className="button-quiet showcase-lightbox-invite" onClick={onInvite} title={`Prime your next collection with ${piece.artist_name} as the lead artist`}>
+            Invite {piece.artist_name} to your collection
+          </button>
+        )}
       </section>
     </div>
   );

@@ -119,6 +119,7 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .showcase-header { max-width: 34rem; margin-bottom: .9rem; }
 .showcase-header h2 { margin: .2rem 0 .35rem; font-size: 1.25rem; }
 .showcase-header .section-help { margin: 0; }
+.showcase-header-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .7rem; }
 .showcase-collection + .showcase-collection { margin-top: 1.25rem; }
 .showcase-collection-title { margin: 0 0 .4rem; font-size: 1rem; color: var(--lavender); }
 .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
@@ -129,6 +130,13 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .showcase-card-artist { color: var(--subtle); font-size: .68rem; }
 .showcase-lightbox-image { width: 100%; border-radius: .6rem; margin-bottom: 1rem; display: block; }
 .showcase-lightbox-artist { color: var(--muted); font-size: .85rem; margin-top: -.5rem; }
+.showcase-lightbox-invite { margin-top: .8rem; }
+.artist-roster-group { margin-top: 1.75rem; }
+.artist-roster-group:first-of-type { margin-top: 0; }
+.artist-roster-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.artist-roster-card { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .6rem .85rem; border: 1px solid var(--line); border-radius: .5rem; background: #161420; }
+.artist-roster-card strong { display: block; color: var(--ink); }
+.artist-roster-card span { display: block; color: var(--muted); font-size: .8rem; margin-top: .1rem; }
 .showcase-skeleton-card, .community-gallery-skeleton-card { aspect-ratio: 1; border-radius: .6rem; background: var(--panel); border: 1px solid var(--line); animation: skeleton-pulse 1.4s ease-in-out infinite; }
 @keyframes skeleton-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 .compact-archive { margin: 0 0 1.75rem; padding: .9rem 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--panel); }

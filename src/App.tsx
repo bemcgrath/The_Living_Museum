@@ -14,8 +14,9 @@ import { GalleryMode } from './components/GalleryMode';
 import { CommunityGallery } from './components/CommunityGallery';
 import { Showcase } from './components/Showcase';
 import { AllShowcaseCollections } from './components/AllShowcaseCollections';
+import { MeetTheArtists } from './components/MeetTheArtists';
 import { Subscribe } from './components/Subscribe';
-import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
+import { GENRE_PROFILES, GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
 /** 'surprise' means let each artist's own personality decide — a natural mix of every style. */
 export type StyleFocus = ArtStyle | 'surprise';
@@ -120,6 +121,7 @@ export default function App() {
   const [galleryMode, setGalleryMode] = useState(false);
   const [communityGalleryOpen, setCommunityGalleryOpen] = useState(false);
   const [allCollectionsOpen, setAllCollectionsOpen] = useState(false);
+  const [meetArtistsOpen, setMeetArtistsOpen] = useState(false);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
@@ -231,6 +233,21 @@ export default function App() {
     setPrioritizedArtist(match.profile);
     setNotice(`Found a match — ${styleLabel(match.style)} selected, led by ${match.profile.name}. Click "Start new run" to invite their collection.`);
     setTimeout(() => setNotice(null), 5500);
+  }
+
+  // Bridges the showcase's real AI-generated art (see Showcase.tsx, AllShowcaseCollections.tsx,
+  // MeetTheArtists.tsx) to the live simulation: "I like this piece" -> "try that artist yourself."
+  // Mirrors handleArtistSearch's own style/prioritizedArtist selection, just looked up by exact
+  // (style, name) instead of a free-text search, since the caller already knows precisely which
+  // profile it means.
+  function inviteArtistFromShowcase(style: string, artistName: string): void {
+    const profile = GENRE_PROFILES[style as ArtStyle]?.find((candidate) => candidate.name === artistName);
+    if (!profile) return; // shouldn't happen — showcase art_name values always come from this same roster
+    setStyleFocus(style as ArtStyle);
+    setPrioritizedArtist(profile);
+    setNotice(`${profile.name} is ready — click "Create collection" or "Start new run" above to begin with them.`);
+    setTimeout(() => setNotice(null), 5500);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // Explicit scrollIntoView rather than relying on native <a href="#id"> fragment navigation, which
@@ -534,7 +551,11 @@ export default function App() {
           <p>{world.getNarrativeSummary()}</p>
         </div>
       </section>
-      <Showcase onBrowseAll={() => setAllCollectionsOpen(true)} />
+      <Showcase
+        onBrowseAll={() => setAllCollectionsOpen(true)}
+        onMeetArtists={() => setMeetArtistsOpen(true)}
+        onInviteArtist={inviteArtistFromShowcase}
+      />
       <Subscribe />
       <section className="archive-panel compact-archive">
         <div className="archive-header">
@@ -841,7 +862,16 @@ export default function App() {
         />
       )}
       {communityGalleryOpen && <CommunityGallery onExit={() => setCommunityGalleryOpen(false)} />}
-      {allCollectionsOpen && <AllShowcaseCollections onExit={() => setAllCollectionsOpen(false)} />}
+      {allCollectionsOpen && (
+        <AllShowcaseCollections
+          onExit={() => setAllCollectionsOpen(false)}
+          onMeetArtists={() => { setAllCollectionsOpen(false); setMeetArtistsOpen(true); }}
+          onInviteArtist={inviteArtistFromShowcase}
+        />
+      )}
+      {meetArtistsOpen && (
+        <MeetTheArtists onExit={() => setMeetArtistsOpen(false)} onInviteArtist={inviteArtistFromShowcase} />
+      )}
     </main>
   );
 }

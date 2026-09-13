@@ -73,4 +73,32 @@ describe('AllShowcaseCollections', () => {
     fireEvent.click(screen.getByText('Close'));
     expect(onExit).toHaveBeenCalledTimes(2);
   });
+
+  it('shows "Meet the Museum\'s Artists" only when onMeetArtists is provided, and calls it when clicked', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ collections: [] }) }));
+    const onMeetArtists = vi.fn();
+    render(<AllShowcaseCollections onExit={() => {}} onMeetArtists={onMeetArtists} />);
+    await waitFor(() => expect(screen.getByText("Meet the Museum's Artists")).toBeTruthy());
+    fireEvent.click(screen.getByText("Meet the Museum's Artists"));
+    expect(onMeetArtists).toHaveBeenCalledOnce();
+    cleanup();
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ collections: [] }) }));
+    render(<AllShowcaseCollections onExit={() => {}} />);
+    expect(screen.queryByText("Meet the Museum's Artists")).toBeNull();
+  });
+
+  it('invites the piece\'s artist, closes the lightbox, and exits the overlay', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve(SAMPLE_COLLECTIONS) }));
+    const onInviteArtist = vi.fn();
+    const onExit = vi.fn();
+    render(<AllShowcaseCollections onExit={onExit} onInviteArtist={onInviteArtist} />);
+    await waitFor(() => expect(screen.getByText('a quiet harbor at rest')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('a quiet harbor at rest').closest('figure')!);
+    fireEvent.click(screen.getByText('Invite Oscar to your collection'));
+
+    expect(onInviteArtist).toHaveBeenCalledWith('impressionist', 'Oscar');
+    expect(onExit).toHaveBeenCalledOnce();
+  });
 });
