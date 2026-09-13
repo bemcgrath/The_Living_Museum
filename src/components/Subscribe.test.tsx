@@ -17,7 +17,7 @@ describe('Subscribe', () => {
     render(<Subscribe />);
     fillEmail('visitor@example.com');
     fireEvent.click(screen.getByRole('button', { name: 'Join for free' }));
-    await waitFor(() => expect(screen.getByText("You're in!")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("You're on the list.")).toBeTruthy());
   });
 
   it('redirects to Stripe when the response includes a url (paid mode)', async () => {

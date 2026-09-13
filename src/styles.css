@@ -21,7 +21,7 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { margin: 0; min-width: 320px; }
 /* Anchor targets for .section-nav below — offsets the jump so the sticky nav doesn't cover the heading. */
-#collection, #agents, #movements, #exhibitions, #events, #history, #community { scroll-margin-top: 4.5rem; }
+#collection, #agents, #movements, #exhibitions, #events, #history, #community, #showcase { scroll-margin-top: 4.5rem; }
 button, select, input { font: inherit; }
 button { border: 1px solid #655a7d; border-radius: .55rem; background: #29233a; color: var(--ink); padding: .68rem .95rem; cursor: pointer; transition: background .18s, border-color .18s, transform .18s, box-shadow .18s, color .18s; }
 button:hover { background: #3a2f52; border-color: var(--lavender); color: #fff; transform: translateY(-1px); box-shadow: 0 0 0 3px #d5a8ff22; }

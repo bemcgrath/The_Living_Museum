@@ -52,8 +52,18 @@ export function Subscribe() {
       <section className="subscribe-panel">
         <div className="subscribe-header">
           <p className="eyebrow">Join the community</p>
-          <h2>You're in!</h2>
-          <p className="section-help">Check your inbox for your first piece — it's on its way.</p>
+          <h2>You're on the list.</h2>
+          <p className="section-help">
+            Your first piece arrives when the weekly send goes live — we're finishing the last few
+            pieces now.
+          </p>
+          <button
+            type="button"
+            className="button-quiet"
+            onClick={() => document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          >
+            Browse The Impressionist Room
+          </button>
         </div>
       </section>
     );
@@ -65,8 +75,8 @@ export function Subscribe() {
         <p className="eyebrow">Join the community</p>
         <h2>A weekly piece, delivered</h2>
         <p className="section-help">
-          Free while we're testing — no card required. Pick a genre for your weekly AI-generated piece (or
-          search for a favorite artist), or leave it on Surprise me for a natural mix.
+          Join the waitlist — free, no card required. Pick a genre for your future weekly AI-generated
+          piece (or search for a favorite artist), or leave it on Surprise me for a natural mix.
         </p>
       </div>
       <form className="subscribe-form" onSubmit={handleSubmit}>

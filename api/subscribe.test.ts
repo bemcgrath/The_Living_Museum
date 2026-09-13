@@ -20,6 +20,7 @@ vi.mock('../lib/server/supabase', () => ({
 }));
 
 vi.mock('../lib/server/deliverArtwork', () => ({
+  artworkDeliveryEnabled: () => process.env.ARTWORK_DELIVERY_ENABLED === 'true',
   deliverArtworkEmail: (subscriber: unknown, kind: string) => {
     deliveredCalls.push({ subscriber, kind });
     return Promise.resolve();
@@ -54,11 +55,26 @@ beforeEach(() => {
   checkoutSessionCalls = 0;
   delete process.env.SUBSCRIPTION_REQUIRES_PAYMENT;
   delete process.env.STRIPE_PRICE_ID;
+  delete process.env.ARTWORK_DELIVERY_ENABLED;
 });
 
 describe('api/subscribe (free mode: SUBSCRIPTION_REQUIRES_PAYMENT=false)', () => {
-  it('marks the subscriber active, sends a welcome piece, and never touches Stripe', async () => {
+  it('marks the subscriber active but never generates or sends anything while ARTWORK_DELIVERY_ENABLED is unset (list-building mode)', async () => {
     process.env.SUBSCRIPTION_REQUIRES_PAYMENT = 'false';
+    const { req, res } = makeReqRes({ email: 'visitor@example.com' });
+    await handler(req as never, res as never);
+
+    expect(upsertedRows).toHaveLength(1);
+    expect(upsertedRows[0]).toMatchObject({ status: 'active' });
+    expect(deliveredCalls).toHaveLength(0);
+    expect(checkoutSessionCalls).toBe(0);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ success: true });
+  });
+
+  it('marks the subscriber active, sends a welcome piece, and never touches Stripe once ARTWORK_DELIVERY_ENABLED=true', async () => {
+    process.env.SUBSCRIPTION_REQUIRES_PAYMENT = 'false';
+    process.env.ARTWORK_DELIVERY_ENABLED = 'true';
     const { req, res } = makeReqRes({ email: 'visitor@example.com' });
     await handler(req as never, res as never);
 

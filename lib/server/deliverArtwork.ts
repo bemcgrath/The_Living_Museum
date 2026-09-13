@@ -6,6 +6,20 @@ import { getResendClient, getFromAddress } from './resend';
 import { storeArtwork } from './storeArtwork';
 
 /**
+ * Master switch for *paid* artwork delivery (image generation + Resend send). Defaults to DISABLED:
+ * during a list-building launch (see SUBSCRIPTION_REQUIRES_PAYMENT=false), every signup would
+ * otherwise generate a ~$0.05-0.07 image via lib/server/imageProvider.ts and then fail to send it
+ * anyway — an unverified Resend account can only deliver to the account owner's own address. Set
+ * ARTWORK_DELIVERY_ENABLED=true only once a sending domain is verified in Resend and paid delivery
+ * is actually intended. Callers (api/subscribe.ts, api/webhooks/stripe.ts, api/cron/weekly-art.ts)
+ * check this before calling deliverArtworkEmail — kept out of deliverArtworkEmail itself so the
+ * function always does what it says and each caller can report "skipped" in its own terms.
+ */
+export function artworkDeliveryEnabled(): boolean {
+  return process.env.ARTWORK_DELIVERY_ENABLED === 'true';
+}
+
+/**
  * Generates and emails one subscriber's personalized piece. Shared by the immediate "welcome"
  * delivery (api/webhooks/stripe.ts, fired right when a trial starts — nobody should sign up and
  * then wait up to a week to see anything) and the recurring weekly send (api/cron/weekly-art.ts).

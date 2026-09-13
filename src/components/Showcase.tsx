@@ -57,13 +57,13 @@ export function Showcase() {
   if (visible.length === 0) return null;
 
   return (
-    <section className="showcase-panel">
+    <section className="showcase-panel" id="showcase">
       <div className="showcase-header">
         <p className="eyebrow">Real pieces, really generated</p>
         <h2>{visible.length === 1 ? visible[0].name : 'From the collections'}</h2>
         <p className="section-help">
           Actual AI-generated art from the weekly email pipeline — not the in-app procedural simulation above.
-          This is what lands in a subscriber's inbox.
+          This is what a subscriber's weekly piece looks like.
         </p>
       </div>
       {visible.map((collection) => (

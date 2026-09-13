@@ -2,7 +2,7 @@ import type Stripe from 'stripe';
 import { getStripeClient } from '../../lib/server/stripe';
 import { getSupabaseClient, Subscriber, SubscriberStatus } from '../../lib/server/supabase';
 import type { VercelRequest, VercelResponse } from '../../lib/server/types';
-import { deliverArtworkEmail } from '../../lib/server/deliverArtwork';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork';
 
 // Stripe signature verification needs the raw request body — Vercel's default JSON body parsing
 // would otherwise re-serialize it slightly differently and break the signature check.
@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           // A failure here shouldn't fail the whole webhook — the critical part (marking the
           // subscriber trialing) already succeeded above, and Stripe would otherwise retry the
           // whole event over a transient image-gen/email hiccup.
-          if (subscriber) {
+          if (subscriber && artworkDeliveryEnabled()) {
             try {
               await deliverArtworkEmail(subscriber as Subscriber, 'welcome');
             } catch (welcomeError) {

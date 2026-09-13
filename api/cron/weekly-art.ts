@@ -1,6 +1,6 @@
 import { getSupabaseClient, Subscriber } from '../../lib/server/supabase';
 import type { VercelRequest, VercelResponse } from '../../lib/server/types';
-import { deliverArtworkEmail } from '../../lib/server/deliverArtwork';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork';
 
 const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
 
@@ -22,6 +22,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || req.headers.authorization !== `Bearer ${cronSecret}`) {
     res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  if (!artworkDeliveryEnabled()) {
+    // See lib/server/deliverArtwork.ts — delivery is off by default (e.g. during a list-building
+    // launch with no verified Resend domain yet). Report this honestly rather than a fake sent: 0.
+    res.status(200).json({ sent: 0, failed: 0, skipped: 0, reason: 'artwork delivery disabled' });
     return;
   }
 

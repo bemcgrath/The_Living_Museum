@@ -3,7 +3,7 @@ import { ART_STYLES, ArtStyle } from '../src/models/Artwork';
 import { findArtistByName } from '../src/data/genreProfiles';
 import { getSupabaseClient, Subscriber } from '../lib/server/supabase';
 import { getStripeClient } from '../lib/server/stripe';
-import { deliverArtworkEmail } from '../lib/server/deliverArtwork';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../lib/server/deliverArtwork';
 
 // Defaults to requiring payment — an unset/misconfigured env var should never accidentally grant
 // free access. Set SUBSCRIPTION_REQUIRES_PAYMENT=false to accept email-only signups instead (see
@@ -78,10 +78,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       // Best-effort, same reasoning as the paid path's webhook-triggered welcome piece (see
       // api/webhooks/stripe.ts): nobody should sign up and wait up to a week to see anything, and a
       // transient image-gen/email hiccup shouldn't turn a successful signup into an error response.
-      try {
-        await deliverArtworkEmail(subscriber as Subscriber, 'welcome');
-      } catch (welcomeError) {
-        console.error(`Welcome piece failed for subscriber ${subscriber.id}`, welcomeError);
+      // Gated on artworkDeliveryEnabled() — see lib/server/deliverArtwork.ts for why: during a
+      // list-building launch this would otherwise spend real money generating images that then fail
+      // to send. The response is identical either way; the client can't and shouldn't tell.
+      if (artworkDeliveryEnabled()) {
+        try {
+          await deliverArtworkEmail(subscriber as Subscriber, 'welcome');
+        } catch (welcomeError) {
+          console.error(`Welcome piece failed for subscriber ${subscriber.id}`, welcomeError);
+        }
       }
       res.status(200).json({ success: true });
       return;

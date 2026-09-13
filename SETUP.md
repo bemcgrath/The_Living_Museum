@@ -5,6 +5,30 @@ four external accounts. None of this can be created on your behalf — each requ
 identity/billing. Once you have the keys, fill in `.env.local` (copy from `.env.example`) for local
 testing, and set the same variables in the Vercel project's Environment Variables for production.
 
+## Launching in list-building mode (no domain, $0)
+
+To test whether people are interested before spending anything, skip straight to a deploy with only
+these four env vars set in Vercel (Project Settings → Environment Variables):
+
+```
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<secret key>
+SUBSCRIPTION_REQUIRES_PAYMENT=false
+SITE_URL=https://<project>.vercel.app     # fill in after the first deploy assigns this, then redeploy
+```
+
+Import the repo at vercel.com/new and deploy — no domain purchase needed, Vercel gives you a free
+`<project>.vercel.app` URL. **Do not set** `OPENAI_API_KEY`, `XAI_API_KEY`, `RESEND_API_KEY`,
+`CRON_SECRET`, or any `STRIPE_*` var yet: `ARTWORK_DELIVERY_ENABLED` (see `.env.example`) already
+keeps every signup free of image-generation or email spend by default, and leaving those keys unset
+is the belt-and-braces backup — spending stays impossible even if that flag were ever wrong. The
+weekly cron in `vercel.json` is also inert without `CRON_SECRET` (it 401s).
+
+Read results in Supabase → Table Editor → `subscribers`, sorted by `created_at`. Signup count and the
+`preferred_style` column are the whole validation signal. Once that shows real interest, work through
+the full setup below (a real domain, Resend verification, image-provider key) and flip
+`ARTWORK_DELIVERY_ENABLED=true` to start actually sending pieces.
+
 ## 1. Supabase (subscriber database + artwork storage)
 
 1. Create a project at supabase.com.
