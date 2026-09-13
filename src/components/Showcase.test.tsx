@@ -1,6 +1,21 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Showcase } from './Showcase';
+
+const SAMPLE_COLLECTION = {
+  collections: [
+    {
+      id: 'c1',
+      slug: 'the-impressionist-room',
+      name: 'The Impressionist Room',
+      style: 'impressionist',
+      blurb: null,
+      pieces: [
+        { id: 'p1', style: 'impressionist', subject: 'a sunlit landscape with rolling hills', image_url: 'https://example.com/a.png' },
+      ],
+    },
+  ],
+};
 
 afterEach(() => {
   cleanup();
@@ -68,5 +83,45 @@ describe('Showcase', () => {
     const { container } = render(<Showcase />);
     await flushFetch();
     expect(container.firstChild).toBeNull();
+  });
+
+  it('shows a pulsing skeleton while the fetch is in flight, not a blank gap', async () => {
+    let resolveFetch: (value: unknown) => void = () => {};
+    vi.stubGlobal('fetch', vi.fn(() => new Promise((resolve) => { resolveFetch = resolve; })));
+    const { container } = render(<Showcase />);
+    expect(container.querySelector('.showcase-skeleton-card')).toBeTruthy();
+    // Resolve so the pending promise doesn't leak into the next test.
+    await act(async () => {
+      resolveFetch({ json: () => Promise.resolve({ collections: [] }) });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
+  it('opens a lightbox with the piece\'s style/subject when clicked, and closes on Escape', async () => {
+    stubFetch(SAMPLE_COLLECTION);
+    render(<Showcase />);
+    await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('a sunlit landscape with rolling hills').closest('figure')!);
+    expect(screen.getByText('Part of The Impressionist Room')).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByText('Part of The Impressionist Room')).toBeNull());
+  });
+
+  it('shows "Browse all collections" only when onBrowseAll is provided, and calls it when clicked', async () => {
+    stubFetch(SAMPLE_COLLECTION);
+    const onBrowseAll = vi.fn();
+    render(<Showcase onBrowseAll={onBrowseAll} />);
+    await waitFor(() => expect(screen.getByText('Browse all collections')).toBeTruthy());
+    fireEvent.click(screen.getByText('Browse all collections'));
+    expect(onBrowseAll).toHaveBeenCalledOnce();
+    cleanup();
+
+    stubFetch(SAMPLE_COLLECTION);
+    render(<Showcase />);
+    await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
+    expect(screen.queryByText('Browse all collections')).toBeNull();
   });
 });

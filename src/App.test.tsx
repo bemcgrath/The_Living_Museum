@@ -8,8 +8,10 @@ afterEach(() => {
 });
 beforeEach(() => {
   window.localStorage.clear();
-  // <Showcase /> fetches on mount; jsdom has no relative-URL base, so an unstubbed fetch rejects and
-  // produces act() noise in every test here. An empty showcase renders nothing (see Showcase.tsx).
+  // <Showcase /> fetches on mount (and <AllShowcaseCollections />, if ever opened, fetches
+  // /api/collections); jsdom has no relative-URL base, so an unstubbed fetch rejects and produces
+  // act() noise in every test here. This stub is URL-agnostic and covers both — an empty showcase
+  // renders nothing either way (see Showcase.tsx).
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ collections: [] }) }));
 });
 

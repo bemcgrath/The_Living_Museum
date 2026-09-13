@@ -1,10 +1,9 @@
 /**
- * A curated showcase of real AI-generated artwork, shown directly on the main page above the
- * subscribe form — proof-of-quality art for a visitor deciding whether to sign up (see
- * scripts/generate-showcase.ts, api/showcase.ts). Shows a pulsing skeleton while loading, then
- * renders nothing at all (not an empty-state message) if there's truly no featured collection with
- * at least one piece: this is an always-mounted block every visitor sees, not a modal someone opened
- * on purpose, so there's nothing worth showing before the first collection is generated.
+ * Full-screen browse-everything view of every showcase collection ever generated, featured or not
+ * (see scripts/generate-showcase.ts, api/collections.ts) — the "see everything" counterpart to
+ * Showcase.tsx, which only shows the homepage's featured subset. Structurally mirrors
+ * CommunityGallery.tsx (same overlay chrome, loading/error/empty states), but lists AI-generated
+ * showcase pieces instead of pieces actually emailed to subscribers.
  */
 import { useEffect, useState } from 'react';
 import { styleLabel } from '../models/Artwork';
@@ -28,30 +27,24 @@ interface ShowcaseCollectionView {
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
-function ShowcaseSkeleton() {
+function CollectionsSkeleton() {
   return (
-    <section className="showcase-panel" aria-hidden="true">
-      <div className="showcase-header">
-        <p className="eyebrow">Real pieces, really generated</p>
-        <h2>Loading the showcase…</h2>
-      </div>
-      <div className="showcase-grid">
-        {Array.from({ length: 5 }, (_, index) => (
-          <div key={index} className="showcase-skeleton-card" />
-        ))}
-      </div>
-    </section>
+    <div className="showcase-grid" aria-hidden="true">
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="showcase-skeleton-card" />
+      ))}
+    </div>
   );
 }
 
-export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
+export function AllShowcaseCollections({ onExit }: { onExit: () => void }) {
   const [collections, setCollections] = useState<ShowcaseCollectionView[]>([]);
   const [state, setState] = useState<LoadState>('loading');
   const [selected, setSelected] = useState<{ piece: ShowcasePieceView; collectionName: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/showcase')
+    fetch('/api/collections')
       .then((response) => response.json().catch(() => null))
       .then((data: { collections?: ShowcaseCollectionView[] } | null) => {
         if (cancelled) return;
@@ -70,29 +63,31 @@ export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
     };
   }, []);
 
-  if (state === 'loading') return <ShowcaseSkeleton />;
-  if (state !== 'loaded') return null; // error, or nothing to show — stays silent, not stuck-loading
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === 'Escape') onExit();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onExit]);
+
   const visible = collections.filter((collection) => collection.pieces.length > 0);
-  if (visible.length === 0) return null;
 
   return (
-    <section className="showcase-panel" id="showcase">
-      <div className="showcase-header">
-        <p className="eyebrow">Real pieces, really generated</p>
-        <h2>{visible.length === 1 ? visible[0].name : 'From the collections'}</h2>
-        <p className="section-help">
-          Actual AI-generated art from the weekly email pipeline — not the in-app procedural simulation above.
-          This is what a subscriber's weekly piece looks like.
-        </p>
-        {onBrowseAll && (
-          <button className="button-quiet" onClick={onBrowseAll} title="Browse every showcase collection ever generated, not just what's featured here">
-            Browse all collections
-          </button>
-        )}
+    <div className="gallery-mode-overlay community-gallery-overlay" role="dialog" aria-modal="true" aria-label="All showcase collections">
+      <button className="gallery-mode-exit" onClick={onExit} title="Close (Esc)">Close</button>
+      <div className="community-gallery-header">
+        <p className="eyebrow">Every generated collection</p>
+        <h2>Browse all collections</h2>
       </div>
-      {visible.map((collection) => (
+      {state === 'loading' && <CollectionsSkeleton />}
+      {state === 'error' && <p className="community-gallery-status">Couldn't load the collections right now.</p>}
+      {state === 'loaded' && visible.length === 0 && (
+        <p className="community-gallery-status">No showcase collections yet.</p>
+      )}
+      {state === 'loaded' && visible.map((collection) => (
         <div key={collection.id} className="showcase-collection">
-          {visible.length > 1 && <h3 className="showcase-collection-title">{collection.name}</h3>}
+          <h3 className="showcase-collection-title">{collection.name}</h3>
           {collection.blurb && <p className="section-help">{collection.blurb}</p>}
           <div className="showcase-grid">
             {collection.pieces.map((piece) => (
@@ -115,6 +110,6 @@ export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
         collectionName={selected?.collectionName ?? ''}
         onClose={() => setSelected(null)}
       />
-    </section>
+    </div>
   );
 }

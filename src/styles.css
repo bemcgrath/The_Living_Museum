@@ -25,13 +25,18 @@ body { margin: 0; min-width: 320px; }
 button, select, input { font: inherit; }
 button { border: 1px solid #655a7d; border-radius: .55rem; background: #29233a; color: var(--ink); padding: .68rem .95rem; cursor: pointer; transition: background .18s, border-color .18s, transform .18s, box-shadow .18s, color .18s; }
 button:hover { background: #3a2f52; border-color: var(--lavender); color: #fff; transform: translateY(-1px); box-shadow: 0 0 0 3px #d5a8ff22; }
-button:focus-visible, select:focus-visible, input:focus-visible, .art-card:focus-visible, .interactive-row:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
+button:focus-visible, select:focus-visible, input:focus-visible, .art-card:focus-visible, .interactive-row:focus-visible, .showcase-card:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
 .button-primary { background: var(--purple-btn); color: #fff; border-color: var(--purple-border); font-weight: 750; }
 .button-primary:hover { background: var(--purple-btn-hover); border-color: #dcb3ff; box-shadow: 0 0 0 3px #d5a8ff33; }
 .button-quiet { background: transparent; border-color: #514860; color: var(--muted); }
 .button-quiet:hover { background: #3a2f52; border-color: var(--lavender); color: #fff; box-shadow: 0 0 0 3px #d5a8ff22; }
 .museum { max-width: 1380px; margin: 0 auto; padding: 2rem clamp(1.1rem, 4vw, 4rem) 5rem; }
-.hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; padding: .5rem 0 1.25rem; border-bottom: 1px solid var(--line); }
+/* Stacked (title block, then a full-width toolbar) rather than side-by-side: a side-by-side row
+   bottom-aligns the two blocks, so a tall toolbar (many buttons + a select + text input + the speed
+   slider) pushed the short title block down to match it, reading as a wall of empty space above the
+   title. Stacking gives the toolbar the full page width to wrap into, and removes the height coupling
+   entirely. */
+.hero { display: flex; flex-direction: column; gap: 1rem; padding: .5rem 0 1.25rem; border-bottom: 1px solid var(--line); }
 .section-nav { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; padding: .7rem clamp(1.1rem, 4vw, 4rem); margin: 0 calc(-1 * clamp(1.1rem, 4vw, 4rem)) 1.25rem; background: #14131cf0; backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
 .section-nav a { color: var(--muted); font-size: .82rem; font-weight: 600; text-decoration: none; padding: .2rem 0; }
 .section-nav a:hover, .section-nav a:focus-visible { color: var(--lavender); }
@@ -44,10 +49,14 @@ h1 { max-width: 680px; margin: .15rem 0 .4rem; font-size: clamp(1.8rem, 4.2vw, 3
 h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .eyebrow { margin: 0; color: var(--lavender); text-transform: uppercase; letter-spacing: .15em; font-size: .65rem; font-weight: 750; }
 .hero-copy { margin: 0; color: var(--muted); font-size: .95rem; }
-.hero-actions { display: grid; gap: .5rem; justify-items: end; position: relative; }
+.hero-actions { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; position: relative; }
 .save-notice { font-size: .78rem; color: var(--mint); background: #162420; border: 1px solid #2d5446; padding: .3rem .6rem; border-radius: .4rem; animation: card-in .25s ease-out; }
-.controls-help { margin: 0; max-width: 420px; color: var(--muted); font-size: .72rem; line-height: 1.4; text-align: right; }
-.controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; align-items: center; }
+.controls-help { margin: 0; max-width: 640px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.controls { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+/* A thin visual break between logical clusters of controls (run controls / new-collection setup /
+   view modes) without forcing them to wrap as separate blocks — each button still wraps individually
+   like any other .controls child, so the row stays as compact as before the grouping was added. */
+.controls-divider { align-self: stretch; width: 1px; margin: .1rem .2rem; background: var(--line); }
 .style-focus-control { color: var(--muted); font-size: .78rem; }
 .style-focus-control select { background: transparent; border: 1px solid #514860; color: var(--muted); border-radius: .4rem; padding: .35rem .5rem; font-size: .82rem; }
 .style-focus-control select:hover, .style-focus-control select:focus { background: #3a2f52; border-color: var(--lavender); color: #fff; box-shadow: 0 0 0 3px #d5a8ff22; }
@@ -56,7 +65,7 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .live-indicator { color: var(--muted); font-size: .72rem; letter-spacing: .03em; }
 .live-dot { display: inline-block; width: 7px; height: 7px; margin-right: .35rem; border-radius: 50%; background: var(--lavender); box-shadow: 0 0 0 4px #d5a8ff22; animation: pulse-dot 2.2s ease-in-out infinite; }
 @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px #d5a8ff22; } 50% { box-shadow: 0 0 0 8px #d5a8ff08; } }
-@media (prefers-reduced-motion: reduce) { .live-dot, .art-card, .modal, .modal-backdrop, .gallery-mode-stage, .stat-card strong { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .live-dot, .art-card, .modal, .modal-backdrop, .gallery-mode-stage, .stat-card strong, .showcase-card, .showcase-skeleton-card, .community-gallery-skeleton-card { animation: none !important; transition: none !important; } }
 
 /* Gallery mode: a full-screen, chrome-free tour through the collection — the "just watch it" view. */
 .gallery-mode-overlay { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(1.25rem, 4vw, 3rem); background: radial-gradient(ellipse at center, #1b1730 0%, #0b0a12 78%); }
@@ -113,9 +122,13 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .showcase-collection + .showcase-collection { margin-top: 1.25rem; }
 .showcase-collection-title { margin: 0 0 .4rem; font-size: 1rem; color: var(--lavender); }
 .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
-.showcase-card { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; overflow: hidden; animation: card-in .42s cubic-bezier(.2,.7,.3,1) backwards; }
+.showcase-card { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; overflow: hidden; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; animation: card-in .42s cubic-bezier(.2,.7,.3,1) backwards; }
+.showcase-card:hover, .showcase-card:focus-visible { border-color: var(--lavender); transform: translateY(-3px); box-shadow: 0 1rem 2rem #0006; outline: none; }
 .showcase-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
 .showcase-card figcaption { padding: .5rem .6rem; color: var(--muted); font-size: .72rem; }
+.showcase-lightbox-image { width: 100%; border-radius: .6rem; margin-bottom: 1rem; display: block; }
+.showcase-skeleton-card, .community-gallery-skeleton-card { aspect-ratio: 1; border-radius: .6rem; background: var(--panel); border: 1px solid var(--line); animation: skeleton-pulse 1.4s ease-in-out infinite; }
+@keyframes skeleton-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 .compact-archive { margin: 0 0 1.75rem; padding: .9rem 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--panel); }
 .archive-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: .6rem; }
 .archive-header h2 { font-size: 1.15rem; }
@@ -188,7 +201,12 @@ aside > h2 { margin: 1.25rem 0 .65rem; border: 0; background: transparent; paddi
 .agent-sample-art { display: block; aspect-ratio: 1; border-radius: .35rem; overflow: hidden; background: #252033; }
 .agent-sample-art svg { display: block; width: 100%; height: 100%; }
 .agent-sample-card small { color: var(--muted); font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.admin-tools { margin-top: 3rem; color: var(--subtle); border-top: 1px solid var(--line); padding-top: .8rem; }.admin-tools summary { cursor: pointer; font-size: .72rem; }.simulation-settings { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin: .8rem 0; padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: .7rem; }.simulation-settings label { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .8rem; }.simulation-settings input:not([type="range"]) { width: 6rem; }.seed-help { color: var(--subtle); font-size: .75rem; }.run-status { color: var(--lavender); font-size: .8rem; margin-right: auto; }.speed-control { flex: 1; min-width: 240px; }.speed-control input { flex: 1; accent-color: var(--lavender); }
+.admin-tools { margin-top: 3rem; color: var(--subtle); border-top: 1px solid var(--line); padding-top: .8rem; }.admin-tools summary { cursor: pointer; font-size: .72rem; }.simulation-settings { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin: .8rem 0; padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: .7rem; }.simulation-settings label { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .8rem; }.simulation-settings input:not([type="range"]) { width: 6rem; }.seed-help { color: var(--subtle); font-size: .75rem; }.run-status { color: var(--lavender); font-size: .8rem; margin-right: auto; }
+/* .speed-control now lives in the toolbar's .controls-group (moved from the Admin tools panel it was
+   originally sized for), so it's compact/inline like the other toolbar controls, not stretched to
+   fill a wide panel. */
+.speed-control { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); font-size: .78rem; }
+.speed-control input { width: 6rem; accent-color: var(--lavender); }
 .modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 1rem; background: #08070dcc; z-index: 10; animation: backdrop-in .18s ease-out; }.modal { position: relative; width: min(560px, 100%); max-height: 90vh; overflow: auto; background: var(--panel-raised); border: 1px solid #655a7d; border-radius: .9rem; padding: 1.5rem; box-shadow: 0 1rem 4rem #0008; animation: modal-in .22s cubic-bezier(.2,.8,.3,1); }
 @keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }

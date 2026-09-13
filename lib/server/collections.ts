@@ -64,6 +64,23 @@ export async function listFeaturedCollections(limit = 3): Promise<ShowcaseCollec
   return (data ?? []) as ShowcaseCollection[];
 }
 
+/**
+ * Every collection ever generated, featured or not, most recently created first — for the
+ * "browse all collections" view (see api/collections.ts, AllShowcaseCollections.tsx), as opposed to
+ * listFeaturedCollections's homepage-only subset. Ordered by created_at rather than featured_at
+ * since unfeatured collections have a null featured_at and would sort inconsistently under that column.
+ */
+export async function listAllCollections(limit = 50): Promise<ShowcaseCollection[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('collections')
+    .select(COLLECTION_COLUMNS)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as ShowcaseCollection[];
+}
+
 /** Showcase pieces for the given collections, oldest first (generation order = display order). */
 export async function listCollectionPieces(collectionIds: string[], limit = 60): Promise<ShowcasePiece[]> {
   if (collectionIds.length === 0) return [];

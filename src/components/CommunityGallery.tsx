@@ -17,6 +17,16 @@ interface Piece {
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
+function CommunityGallerySkeleton() {
+  return (
+    <div className="community-gallery-grid" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div key={index} className="community-gallery-skeleton-card" />
+      ))}
+    </div>
+  );
+}
+
 export function CommunityGallery({ onExit }: { onExit: () => void }) {
   const [pieces, setPieces] = useState<Piece[]>([]);
   const [state, setState] = useState<LoadState>('loading');
@@ -57,7 +67,7 @@ export function CommunityGallery({ onExit }: { onExit: () => void }) {
         <p className="eyebrow">The community's collection</p>
         <h2>Weekly pieces, sent to subscribers</h2>
       </div>
-      {state === 'loading' && <p className="community-gallery-status">Loading the community gallery…</p>}
+      {state === 'loading' && <CommunityGallerySkeleton />}
       {state === 'error' && <p className="community-gallery-status">Couldn't load the community gallery right now.</p>}
       {state === 'loaded' && pieces.length === 0 && (
         <p className="community-gallery-status">No community pieces yet — the first weekly send will appear here.</p>

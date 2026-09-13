@@ -13,6 +13,7 @@ import { RandomGenerator } from './utils/RandomGenerator';
 import { GalleryMode } from './components/GalleryMode';
 import { CommunityGallery } from './components/CommunityGallery';
 import { Showcase } from './components/Showcase';
+import { AllShowcaseCollections } from './components/AllShowcaseCollections';
 import { Subscribe } from './components/Subscribe';
 import { GenreProfile, findArtistByName, rosterForStyle } from './data/genreProfiles';
 
@@ -92,7 +93,10 @@ function createSampleArchivedCollection(): ArchivedCollection {
 export default function App() {
   const [seed, setSeed] = useState(42);
   const [seedDraft, setSeedDraft] = useState('42');
-  const [speed, setSpeed] = useState(1);
+  // Mirrors SimulationEngine's own default (see SimulationEngine.ts) so the slider's displayed value
+  // matches the engine's real starting pace — deliberately slow so agents' turns read as considered
+  // rather than a rapid-fire blur (see the chat history on simulation pacing).
+  const [speed, setSpeed] = useState(0.3);
   // Pending style choice for the *next* collection the user creates ("surprise" = natural style mix).
   const [styleFocus, setStyleFocus] = useState<StyleFocus>('surprise');
   // The style focus actually baked into the currently-loaded engine (only changes when a new run starts).
@@ -115,6 +119,7 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [galleryMode, setGalleryMode] = useState(false);
   const [communityGalleryOpen, setCommunityGalleryOpen] = useState(false);
+  const [allCollectionsOpen, setAllCollectionsOpen] = useState(false);
   const [archive, setArchive] = useState<ArchivedCollection[]>(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem('living-museum-archive') ?? '[]') as Partial<ArchivedCollection>[];
@@ -453,9 +458,9 @@ export default function App() {
             <p className="eyebrow">A procedural culture simulator</p>
             <h1>The Living Museum</h1>
             <p className="hero-copy">
-              Autonomous AI agents — artists, critics, curators, collectors, and a historian — create,
-              judge, and collect art in real time, with no script. Watch a culture emerge, or start
-              your own collection below.
+              Autonomous AI agents — artists, critics, curators, collectors, and a historian — create, judge, and
+              collect abstract generative art in real time, with no script. That's different from the real
+              AI-generated photography further down the page — watch a culture emerge here, live, turn by turn.
             </p>
           </div>
         </div>
@@ -465,8 +470,10 @@ export default function App() {
             <button className="button-primary" onClick={() => engine.isSimulationRunning() ? engine.pause() : engine.start()} title={engine.isSimulationRunning() ? 'Pause the automatic simulation' : 'Start the simulation so agents create artworks turn by turn'}>
               {engine.isSimulationRunning() ? 'Pause' : 'Create collection'}
             </button>
-            <button onClick={() => engine.advanceTurn()} title="Manually step forward one turn">Advance turn</button>
+            <button className="button-quiet" onClick={() => engine.advanceTurn()} title="Manually step forward one turn">Advance turn</button>
             <button className="button-quiet" onClick={saveCurrentCollectionToArchive} title="Archive the current museum run to Previous collections without resetting it">Save collection</button>
+            <label className="speed-control">Speed <input type="range" min="0.1" max="5" step="0.1" value={speed} onChange={(event) => { const nextSpeed = Number(event.target.value); setSpeed(nextSpeed); engine.setSimulationSpeed(nextSpeed); }} title="How fast agents take turns — lower is slower and more deliberate" /> <span>{speed.toFixed(1)} turns/sec</span></label>
+            <span className="controls-divider" aria-hidden="true" />
             <label className="filter-control style-focus-control">
               Style
               <select
@@ -495,6 +502,7 @@ export default function App() {
             <button className="button-quiet" onClick={handleArtistSearch} title="Look up the searched artist and select their style for the next new collection">Find artist</button>
             <button className="button-quiet" onClick={generateCollection} title="Archive the current collection, then start a brand new run using the chosen style">Start new run</button>
             <button className="button-quiet" onClick={inviteArtist} title="Invite a new artist with a unique personality and primary style">Invite artist</button>
+            <span className="controls-divider" aria-hidden="true" />
             <button className="button-quiet" onClick={() => setGalleryMode(true)} title="Watch the collection full-screen as an ambient, self-advancing tour">Gallery mode</button>
             <button className="button-quiet" onClick={() => setCommunityGalleryOpen(true)} title="Browse the real AI-generated pieces sent to community subscribers">Community gallery</button>
           </div>
@@ -526,12 +534,15 @@ export default function App() {
           <p>{world.getNarrativeSummary()}</p>
         </div>
       </section>
-      <Showcase />
+      <Showcase onBrowseAll={() => setAllCollectionsOpen(true)} />
       <Subscribe />
       <section className="archive-panel compact-archive">
         <div className="archive-header">
           <h2>Previous collections</h2>
-          <span className="section-help">Click <b>Save collection</b> above or generate a new run to archive state here.</span>
+          <span className="section-help">
+            Saved only in this browser — clearing site data or switching devices starts fresh. Click{' '}
+            <b>Save collection</b> above or generate a new run to archive state here.
+          </span>
         </div>
         {archive.length === 0 ? <p className="empty">Your previous collections will appear here.</p> : (
           <ul className="archive-list">
@@ -703,7 +714,6 @@ export default function App() {
           <label>Optional seed <input aria-label="Optional seed" value={seedDraft} inputMode="numeric" onChange={(event) => setSeedDraft(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && applySeed()} /></label>
           <span className="seed-help">Use the same seed to recreate the same collection.</span>
           <button onClick={applySeed} title="Replace the current run with a specific seed">Use this seed</button>
-          <label className="speed-control">Simulation speed <input type="range" min="0.1" max="5" step="0.1" value={speed} onChange={(event) => { const nextSpeed = Number(event.target.value); setSpeed(nextSpeed); engine.setSimulationSpeed(nextSpeed); }} /> <span>{speed.toFixed(1)} turns/sec</span></label>
           <div className="controls">
             <button onClick={() => { archiveCurrentCollection(); engine.reset(); setRunSource('fresh'); }}>Reset collection</button>
             <button onClick={saveSimulation}>Save snapshot</button>
@@ -831,6 +841,7 @@ export default function App() {
         />
       )}
       {communityGalleryOpen && <CommunityGallery onExit={() => setCommunityGalleryOpen(false)} />}
+      {allCollectionsOpen && <AllShowcaseCollections onExit={() => setAllCollectionsOpen(false)} />}
     </main>
   );
 }

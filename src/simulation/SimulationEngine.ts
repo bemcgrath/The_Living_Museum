@@ -9,7 +9,10 @@ export class SimulationEngine {
   private readonly agents = new Map<string, BaseAgent>();
   private readonly agentFactories = new Map<string, () => BaseAgent>();
   private isRunning = false;
-  private speed = 1;
+  // One full turn (every agent observes/thinks/acts) roughly every 3.3s by default — deliberately
+  // slow so a visitor can actually follow what's happening, rather than the old 1-turn-per-second
+  // default reading as a chaotic blur. See App.tsx's speed slider (0.1-5 turns/sec) to adjust.
+  private speed = 0.3;
   private timer: ReturnType<typeof setInterval> | null = null;
   private listeners = new Set<() => void>();
 

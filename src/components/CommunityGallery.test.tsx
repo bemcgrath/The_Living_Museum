@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CommunityGallery } from './CommunityGallery';
 
@@ -8,6 +8,18 @@ afterEach(() => {
 });
 
 describe('CommunityGallery', () => {
+  it('shows a pulsing skeleton while the fetch is in flight, not a blank gap', async () => {
+    let resolveFetch: (value: unknown) => void = () => {};
+    vi.stubGlobal('fetch', vi.fn(() => new Promise((resolve) => { resolveFetch = resolve; })));
+    const { container } = render(<CommunityGallery onExit={() => {}} />);
+    expect(container.querySelector('.community-gallery-skeleton-card')).toBeTruthy();
+    await act(async () => {
+      resolveFetch({ json: () => Promise.resolve({ pieces: [] }) });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
   it('renders fetched pieces with their style and subject, never a real artist name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       json: () => Promise.resolve({
