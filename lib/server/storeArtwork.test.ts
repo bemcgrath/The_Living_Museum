@@ -42,7 +42,13 @@ describe('storeArtwork', () => {
       imageBase64: 'ZmFrZQ==',
     });
     expect(insertedRows).toHaveLength(1);
-    expect(insertedRows[0]).toMatchObject({ kind: 'showcase', subscriber_id: null, collection_id: 'collection-1' });
+    expect(insertedRows[0]).toMatchObject({
+      kind: 'showcase',
+      subscriber_id: null,
+      collection_id: 'collection-1',
+      artist_real_name: profile.realName,
+      artist_name: profile.name,
+    });
   });
 
   it('records a null collection_id for the existing subscriber-email path (no collectionId passed)', async () => {

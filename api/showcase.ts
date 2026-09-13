@@ -36,6 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         style: piece.style,
         subject: piece.subject,
         image_url: piece.image_url,
+        artist_name: piece.artist_name,
         created_at: piece.created_at,
       })),
     }));

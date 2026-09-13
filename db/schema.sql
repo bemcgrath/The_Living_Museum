@@ -47,7 +47,8 @@ create table if not exists pieces (
   subscriber_id uuid references subscribers(id) on delete set null,
   kind text not null check (kind in ('welcome', 'weekly', 'showcase')),
   style text not null, -- an ArtStyle value (see src/models/Artwork.ts)
-  artist_real_name text not null,
+  artist_real_name text not null, -- internal only — never rendered anywhere a user sees it
+  artist_name text, -- the public-facing fictional persona name (e.g. 'Oscar') — safe to display
   subject text not null,
   prompt text not null,
   image_path text not null, -- path within the 'artwork' Supabase Storage bucket (see SETUP.md)
@@ -91,3 +92,23 @@ create index if not exists pieces_collection_id_idx on pieces (collection_id);
 -- Postgres can't alter a CHECK in place; the inline constraint above is auto-named pieces_kind_check.
 alter table pieces drop constraint if exists pieces_kind_check;
 alter table pieces add constraint pieces_kind_check check (kind in ('welcome', 'weekly', 'showcase'));
+
+-- --- Migration: public persona name on pieces (previously only the private artist_real_name was
+-- stored) -----------------------------------------------------------------------------------------
+alter table pieces add column if not exists artist_name text;
+
+-- One-time backfill for existing impressionist pieces (e.g. "The Impressionist Room"), generated
+-- before this column existed: reverse-maps the already-stored private artist_real_name back to its
+-- public persona name (see src/data/genreProfiles.ts's GENRE_PROFILES.impressionist — keep this in
+-- sync if that roster ever changes). Guarded by "artist_name is null" so it's safe to re-run and
+-- never overwrites a row storeArtwork.ts has already populated going forward. Add a similar block
+-- here if you want to backfill other styles' pre-existing pieces too.
+update pieces set artist_name = case artist_real_name
+  when 'Claude Monet' then 'Oscar'
+  when 'Pierre-Auguste Renoir' then 'Pierre'
+  when 'Edgar Degas' then 'Edgar'
+  when 'Berthe Morisot' then 'Berthe'
+  when 'Camille Pissarro' then 'Camille'
+  when 'Mary Cassatt' then 'Mary'
+end
+where style = 'impressionist' and artist_name is null;

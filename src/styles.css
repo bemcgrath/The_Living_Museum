@@ -125,8 +125,10 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .showcase-card { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: .6rem; overflow: hidden; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; animation: card-in .42s cubic-bezier(.2,.7,.3,1) backwards; }
 .showcase-card:hover, .showcase-card:focus-visible { border-color: var(--lavender); transform: translateY(-3px); box-shadow: 0 1rem 2rem #0006; outline: none; }
 .showcase-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.showcase-card figcaption { padding: .5rem .6rem; color: var(--muted); font-size: .72rem; }
+.showcase-card figcaption { display: flex; flex-direction: column; gap: .15rem; padding: .5rem .6rem; color: var(--muted); font-size: .72rem; }
+.showcase-card-artist { color: var(--subtle); font-size: .68rem; }
 .showcase-lightbox-image { width: 100%; border-radius: .6rem; margin-bottom: 1rem; display: block; }
+.showcase-lightbox-artist { color: var(--muted); font-size: .85rem; margin-top: -.5rem; }
 .showcase-skeleton-card, .community-gallery-skeleton-card { aspect-ratio: 1; border-radius: .6rem; background: var(--panel); border: 1px solid var(--line); animation: skeleton-pulse 1.4s ease-in-out infinite; }
 @keyframes skeleton-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 .compact-archive { margin: 0 0 1.75rem; padding: .9rem 1.1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--panel); }

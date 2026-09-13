@@ -13,6 +13,7 @@ export interface LightboxPiece {
   style: string;
   subject: string;
   image_url: string;
+  artist_name?: string | null;
 }
 
 export function PieceLightbox({
@@ -52,6 +53,7 @@ export function PieceLightbox({
         />
         <h2 id="showcase-piece-title">{styleLabel(piece.style)}</h2>
         <p>{piece.subject}</p>
+        {piece.artist_name && <p className="showcase-lightbox-artist">by {piece.artist_name}</p>}
         <p className="section-help">Part of {collectionName}</p>
       </section>
     </div>

@@ -11,7 +11,7 @@ const SAMPLE_COLLECTION = {
       style: 'impressionist',
       blurb: null,
       pieces: [
-        { id: 'p1', style: 'impressionist', subject: 'a sunlit landscape with rolling hills', image_url: 'https://example.com/a.png' },
+        { id: 'p1', style: 'impressionist', subject: 'a sunlit landscape with rolling hills', image_url: 'https://example.com/a.png', artist_name: 'Oscar' },
       ],
     },
   ],
@@ -42,7 +42,17 @@ async function flushFetch(): Promise<void> {
 }
 
 describe('Showcase', () => {
-  it('renders a featured collection\'s pieces with style and subject, never a real artist name', async () => {
+  it('renders a featured collection\'s pieces with style, subject, and public persona name — never the real artist name', async () => {
+    stubFetch(SAMPLE_COLLECTION);
+    render(<Showcase />);
+    await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
+    expect(screen.getByAltText(/Impressionist.*piece depicting a sunlit landscape with rolling hills/)).toBeTruthy();
+    expect(screen.getByText('The Impressionist Room')).toBeTruthy();
+    expect(screen.getByText('by Oscar')).toBeTruthy();
+    expect(screen.queryByText(/Monet/)).toBeNull();
+  });
+
+  it('renders the card without an artist line when artist_name is null (pre-backfill pieces)', async () => {
     stubFetch({
       collections: [
         {
@@ -52,16 +62,14 @@ describe('Showcase', () => {
           style: 'impressionist',
           blurb: null,
           pieces: [
-            { id: 'p1', style: 'impressionist', subject: 'a sunlit landscape with rolling hills', image_url: 'https://example.com/a.png' },
+            { id: 'p1', style: 'impressionist', subject: 'a sunlit landscape with rolling hills', image_url: 'https://example.com/a.png', artist_name: null },
           ],
         },
       ],
     });
     render(<Showcase />);
     await waitFor(() => expect(screen.getByText('a sunlit landscape with rolling hills')).toBeTruthy());
-    expect(screen.getByAltText(/Impressionist.*piece depicting a sunlit landscape with rolling hills/)).toBeTruthy();
-    expect(screen.getByText('The Impressionist Room')).toBeTruthy();
-    expect(screen.queryByText(/Monet/)).toBeNull();
+    expect(screen.queryByText(/^by /)).toBeNull();
   });
 
   it('renders nothing before any showcase collection exists', async () => {
@@ -105,6 +113,7 @@ describe('Showcase', () => {
 
     fireEvent.click(screen.getByText('a sunlit landscape with rolling hills').closest('figure')!);
     expect(screen.getByText('Part of The Impressionist Room')).toBeTruthy();
+    expect(screen.getAllByText('by Oscar').length).toBeGreaterThan(0); // one on the card, one in the lightbox
 
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByText('Part of The Impressionist Room')).toBeNull());

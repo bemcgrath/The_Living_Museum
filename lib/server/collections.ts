@@ -11,18 +11,24 @@ export interface ShowcaseCollection {
   created_at: string;
 }
 
-/** Public-safe piece shape: no subscriber_id, no artist_real_name (internal only — see genreProfiles.ts). */
+/**
+ * Public-safe piece shape: no subscriber_id, no artist_real_name (internal only — see
+ * genreProfiles.ts). artist_name IS safe to expose — it's the public-facing fictional persona (e.g.
+ * "Oscar"), not the private real-world reference; null for pieces generated before that column
+ * existed and never backfilled (see db/schema.sql).
+ */
 export interface ShowcasePiece {
   id: string;
   collection_id: string;
   style: string;
   subject: string;
   image_url: string;
+  artist_name: string | null;
   created_at: string;
 }
 
 const COLLECTION_COLUMNS = 'id, slug, name, style, blurb, featured_at, created_at';
-const PIECE_COLUMNS = 'id, collection_id, style, subject, image_url, created_at';
+const PIECE_COLUMNS = 'id, collection_id, style, subject, image_url, artist_name, created_at';
 
 /**
  * Creates (or tops up) the collection a generator run writes into, keyed on slug so re-running the

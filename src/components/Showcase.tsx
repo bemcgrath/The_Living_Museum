@@ -15,6 +15,7 @@ interface ShowcasePieceView {
   style: string;
   subject: string;
   image_url: string;
+  artist_name: string | null;
 }
 
 interface ShowcaseCollectionView {
@@ -104,7 +105,10 @@ export function Showcase({ onBrowseAll }: { onBrowseAll?: () => void }) {
                 onKeyDown={(event) => event.key === 'Enter' && setSelected({ piece, collectionName: collection.name })}
               >
                 <img src={piece.image_url} alt={`${styleLabel(piece.style)} piece depicting ${piece.subject}`} loading="lazy" />
-                <figcaption>{piece.subject}</figcaption>
+                <figcaption>
+                  <span>{piece.subject}</span>
+                  {piece.artist_name && <span className="showcase-card-artist">by {piece.artist_name}</span>}
+                </figcaption>
               </figure>
             ))}
           </div>

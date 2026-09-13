@@ -16,7 +16,7 @@ const SAMPLE_COLLECTIONS = {
       style: 'impressionist',
       blurb: null,
       pieces: [
-        { id: 'p1', style: 'impressionist', subject: 'a quiet harbor at rest', image_url: 'https://example.com/a.png' },
+        { id: 'p1', style: 'impressionist', subject: 'a quiet harbor at rest', image_url: 'https://example.com/a.png', artist_name: 'Oscar' },
       ],
     },
   ],
@@ -35,11 +35,12 @@ describe('AllShowcaseCollections', () => {
     });
   });
 
-  it('renders every collection\'s pieces with their style and subject, never a real artist name', async () => {
+  it('renders every collection\'s pieces with their style, subject, and public persona name — never a real artist name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve(SAMPLE_COLLECTIONS) }));
     render(<AllShowcaseCollections onExit={() => {}} />);
     await waitFor(() => expect(screen.getByText('a quiet harbor at rest')).toBeTruthy());
     expect(screen.getByText('The Impressionist Room')).toBeTruthy();
+    expect(screen.getByText('by Oscar')).toBeTruthy();
     expect(screen.queryByText(/Monet/)).toBeNull();
   });
 

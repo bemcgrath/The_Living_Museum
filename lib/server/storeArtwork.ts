@@ -51,6 +51,7 @@ export async function storeArtwork(params: {
       kind,
       style,
       artist_real_name: profile.realName,
+      artist_name: profile.name,
       subject,
       prompt,
       image_path: path,
