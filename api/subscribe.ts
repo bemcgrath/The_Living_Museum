@@ -1,9 +1,9 @@
-import type { VercelRequest, VercelResponse } from '../lib/server/types';
-import { ART_STYLES, ArtStyle } from '../src/models/Artwork';
-import { findArtistByName } from '../src/data/genreProfiles';
-import { getSupabaseClient, Subscriber } from '../lib/server/supabase';
-import { getStripeClient } from '../lib/server/stripe';
-import { artworkDeliveryEnabled, deliverArtworkEmail } from '../lib/server/deliverArtwork';
+import type { VercelRequest, VercelResponse } from '../lib/server/types.js';
+import { ART_STYLES, ArtStyle } from '../src/models/Artwork.js';
+import { findArtistByName } from '../src/data/genreProfiles.js';
+import { getSupabaseClient, Subscriber } from '../lib/server/supabase.js';
+import { getStripeClient } from '../lib/server/stripe.js';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../lib/server/deliverArtwork.js';
 
 // Defaults to requiring payment — an unset/misconfigured env var should never accidentally grant
 // free access. Set SUBSCRIPTION_REQUIRES_PAYMENT=false to accept email-only signups instead (see

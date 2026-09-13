@@ -1,5 +1,5 @@
-import { ArtStyle, styleLabel } from '../../src/models/Artwork';
-import { GenreProfile } from '../../src/data/genreProfiles';
+import { ArtStyle, styleLabel } from '../../src/models/Artwork.js';
+import { GenreProfile } from '../../src/data/genreProfiles.js';
 
 export function weeklyEmailHtml(params: {
   style: ArtStyle;

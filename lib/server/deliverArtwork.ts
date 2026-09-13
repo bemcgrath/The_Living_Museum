@@ -1,9 +1,9 @@
-import { getSupabaseClient, type Subscriber } from './supabase';
-import { generateArtworkImage, toBase64 } from './imageProvider';
-import { resolveWeeklyProfile, buildImagePrompt, weeklyEmailSubject } from './prompt';
-import { weeklyEmailHtml } from './emailTemplate';
-import { getResendClient, getFromAddress } from './resend';
-import { storeArtwork } from './storeArtwork';
+import { getSupabaseClient, type Subscriber } from './supabase.js';
+import { generateArtworkImage, toBase64 } from './imageProvider.js';
+import { resolveWeeklyProfile, buildImagePrompt, weeklyEmailSubject } from './prompt.js';
+import { weeklyEmailHtml } from './emailTemplate.js';
+import { getResendClient, getFromAddress } from './resend.js';
+import { storeArtwork } from './storeArtwork.js';
 
 /**
  * Master switch for *paid* artwork delivery (image generation + Resend send). Defaults to DISABLED:

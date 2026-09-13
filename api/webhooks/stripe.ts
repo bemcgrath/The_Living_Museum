@@ -1,8 +1,8 @@
 import type Stripe from 'stripe';
-import { getStripeClient } from '../../lib/server/stripe';
-import { getSupabaseClient, Subscriber, SubscriberStatus } from '../../lib/server/supabase';
-import type { VercelRequest, VercelResponse } from '../../lib/server/types';
-import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork';
+import { getStripeClient } from '../../lib/server/stripe.js';
+import { getSupabaseClient, Subscriber, SubscriberStatus } from '../../lib/server/supabase.js';
+import type { VercelRequest, VercelResponse } from '../../lib/server/types.js';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork.js';
 
 // Stripe signature verification needs the raw request body — Vercel's default JSON body parsing
 // would otherwise re-serialize it slightly differently and break the signature check.

@@ -1,5 +1,5 @@
-import { getSupabaseClient } from './supabase';
-import type { ArtStyle } from '../../src/models/Artwork';
+import { getSupabaseClient } from './supabase.js';
+import type { ArtStyle } from '../../src/models/Artwork.js';
 
 export interface ShowcaseCollection {
   id: string;

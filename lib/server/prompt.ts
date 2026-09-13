@@ -1,7 +1,7 @@
-import { ART_STYLES, ArtStyle, styleLabel } from '../../src/models/Artwork';
-import { GENRE_PROFILES, GenreProfile, defaultRosterForStyle } from '../../src/data/genreProfiles';
-import { RandomGenerator } from '../../src/utils/RandomGenerator';
-import type { Subscriber } from './supabase';
+import { ART_STYLES, ArtStyle, styleLabel } from '../../src/models/Artwork.js';
+import { GENRE_PROFILES, GenreProfile, defaultRosterForStyle } from '../../src/data/genreProfiles.js';
+import { RandomGenerator } from '../../src/utils/RandomGenerator.js';
+import type { Subscriber } from './supabase.js';
 
 /** A stable per-subscriber, per-week seed — same subscriber won't jump around if the cron reruns, but "surprise me" still varies week to week. */
 function weeklySeed(subscriberId: string): number {

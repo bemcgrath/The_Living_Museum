@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { getSupabaseClient } from './supabase';
-import type { ArtStyle } from '../../src/models/Artwork';
-import type { GenreProfile } from '../../src/data/genreProfiles';
+import { getSupabaseClient } from './supabase.js';
+import type { ArtStyle } from '../../src/models/Artwork.js';
+import type { GenreProfile } from '../../src/data/genreProfiles.js';
 
 const BUCKET = 'artwork';
 

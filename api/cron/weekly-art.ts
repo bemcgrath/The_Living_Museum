@@ -1,6 +1,6 @@
-import { getSupabaseClient, Subscriber } from '../../lib/server/supabase';
-import type { VercelRequest, VercelResponse } from '../../lib/server/types';
-import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork';
+import { getSupabaseClient, Subscriber } from '../../lib/server/supabase.js';
+import type { VercelRequest, VercelResponse } from '../../lib/server/types.js';
+import { artworkDeliveryEnabled, deliverArtworkEmail } from '../../lib/server/deliverArtwork.js';
 
 const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
 

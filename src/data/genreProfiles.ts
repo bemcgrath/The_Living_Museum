@@ -25,7 +25,7 @@
  * personality text here is flavor only — it does not drive style selection the way it does for the
  * default/invited roster in Artist.ts.
  */
-import { ArtStyle, ART_STYLES } from '../models/Artwork';
+import { ArtStyle, ART_STYLES } from '../models/Artwork.js';
 
 export interface GenreProfile {
   /** Short display name used as the agent's name in the simulation. */

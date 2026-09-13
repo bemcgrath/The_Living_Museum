@@ -1,5 +1,5 @@
-import { listFeaturedCollections, listCollectionPieces } from '../lib/server/collections';
-import type { VercelRequest, VercelResponse } from '../lib/server/types';
+import { listFeaturedCollections, listCollectionPieces } from '../lib/server/collections.js';
+import type { VercelRequest, VercelResponse } from '../lib/server/types.js';
 
 /**
  * Public, read-only: the site's curated showcase (see scripts/generate-showcase.ts,

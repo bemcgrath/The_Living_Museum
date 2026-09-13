@@ -1,5 +1,5 @@
-import { getSupabaseClient } from '../lib/server/supabase';
-import type { VercelRequest, VercelResponse } from '../lib/server/types';
+import { getSupabaseClient } from '../lib/server/supabase.js';
+import type { VercelRequest, VercelResponse } from '../lib/server/types.js';
 
 const PAGE_SIZE = 60;
 
