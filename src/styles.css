@@ -89,6 +89,7 @@ h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.03em; }
 .community-gallery-card figcaption { padding: .75rem .9rem; }
 .community-gallery-card figcaption strong { display: block; color: var(--lavender); }
 .community-gallery-card figcaption span { display: block; color: var(--muted); font-size: .8rem; margin-top: .2rem; }
+.community-gallery-card figcaption span.community-gallery-card-artist { color: var(--subtle); font-size: .72rem; }
 @keyframes gallery-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .turn-label { margin-left: .7rem; color: var(--subtle); }
 

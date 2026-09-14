@@ -12,6 +12,7 @@ interface Piece {
   style: string;
   subject: string;
   image_url: string;
+  artist_name: string | null;
   created_at: string;
 }
 
@@ -80,6 +81,7 @@ export function CommunityGallery({ onExit }: { onExit: () => void }) {
               <figcaption>
                 <strong>{styleLabel(piece.style)}</strong>
                 <span>{piece.subject}</span>
+                {piece.artist_name && <span className="community-gallery-card-artist">by {piece.artist_name}</span>}
               </figcaption>
             </figure>
           ))}

@@ -20,18 +20,32 @@ describe('CommunityGallery', () => {
     });
   });
 
-  it('renders fetched pieces with their style and subject, never a real artist name', async () => {
+  it('renders fetched pieces with their style, subject, and public persona name — never a real artist name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       json: () => Promise.resolve({
         pieces: [
-          { id: '1', style: 'impressionist', subject: 'a riverside path', image_url: 'https://example.com/a.png', created_at: new Date().toISOString() },
+          { id: '1', style: 'impressionist', subject: 'a riverside path', image_url: 'https://example.com/a.png', artist_name: 'Oscar', created_at: new Date().toISOString() },
         ],
       }),
     }));
     render(<CommunityGallery onExit={() => {}} />);
     await waitFor(() => expect(screen.getByText('a riverside path')).toBeTruthy());
     expect(screen.getByAltText(/Impressionist.*piece depicting a riverside path/)).toBeTruthy();
+    expect(screen.getByText('by Oscar')).toBeTruthy();
     expect(screen.queryByText(/Monet/)).toBeNull();
+  });
+
+  it('renders the card without an artist line when artist_name is null (pieces sent before that column existed)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({
+        pieces: [
+          { id: '1', style: 'impressionist', subject: 'a riverside path', image_url: 'https://example.com/a.png', artist_name: null, created_at: new Date().toISOString() },
+        ],
+      }),
+    }));
+    render(<CommunityGallery onExit={() => {}} />);
+    await waitFor(() => expect(screen.getByText('a riverside path')).toBeTruthy());
+    expect(screen.queryByText(/^by /)).toBeNull();
   });
 
   it('shows an empty-state message when there are no pieces yet', async () => {
